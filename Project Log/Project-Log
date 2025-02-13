@@ -1,0 +1,20 @@
+Project Log- Investr
+Evidence of some of my work that I have been working on is shown in the project Log folder, for example pictures of my wireframes and a document of research I did before starting 
+
+Note- I am behind on my schedule which I planned in the interim report 
+The work which I have already completed in the previous weeks are:
+#Setting up flask and the working environment for my project on pycharm, in terms of the structure of the different files, folders.
+#Making the different
+# I have made two new branches: develop and user/authentication
+# I have made a start to the user authentication, I have set up a firebase project and I am working on making a connection between pycharm firebase, however I have encoutred a couple of issues.
+After a bit of research, I concluded that its best for me to create a virtual enviornment, as the problem seems to do with version issues. The virtual environment will allow me to maneouver these version conflicts
+
+Considering that the project started on the 23rd of September 2024
+I am now on week 20 of the Project
+Week Monday 10th February - Sunday 16th February
+# As I behind and my interview is next week, the plan for this week is to make as much progress as I can
+More specifcally I am to,
+1.Finish the user authentication system, along with the integration of the PostgreSQL database. 
+2. Work on the frontend development, in terms of basic components such as the homepage(dashboard). The aim here is not to completely finish the frontend, but have Completed enough to have a competent workable demo for the interview
+3. I aim on a core functional feature, which i will decided later on in the week, probably the Property search and filter.
+4. Start Creating a presentation for my interview next week
