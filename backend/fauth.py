@@ -22,17 +22,16 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 auth=firebase.auth()
 
 #Defining a create account function
-def signup():
-  while True:
-    email = input("Enter your email: ").strip()                 #Checks whether the user typed their email
+def signup(email, password):
+                 #Checks whether the user typed their email
     if not email:
       print("Error: Email cannot be empty. Please try again.")
-      continue
 
-    password = input("Enter your password: ").strip()         #Check whether user has typed their password
+
+           #Check whether user has typed their password
     if not password:
       print("Error: Password cannot be empty. Please try again.")
-      continue
+
 
     try:                #Tries to create an account
       user = auth.create_user_with_email_and_password(email, password)
@@ -50,22 +49,16 @@ def signup():
       else:
         print(f"An unexpected error occurred: {error}")
 
-    retry = input("Do you want to try again? (y/n): ").lower()
-    if retry != 'y':
-      print("Signup process cancelled.")
-      break
 
-def login():
-  while True:
-    email = input("Enter your email: ").strip()
+
+def login(email, password):
+
     if not email:
       print("Please enter your email")
-      continue
 
-    password = input("Enter your password: ").strip()
+
     if not password:
       print("Please enter your password")
-      continue
 
     try:
       user = auth.sign_in_with_email_and_password(email, password)
@@ -88,11 +81,6 @@ def login():
         except:
             print("Login unsuccessful. Please try again. (Unexpected error parsing response)")  #Fallback
 
-    retry = input("Do you want to try again? (y/n): ").lower()
-    if retry != 'y':
-        print("Login process cancelled.")
-        return None #Or some appropriate value
 
 
 
-login()
