@@ -51,7 +51,7 @@ def signup(email, password):
 
 
 
-def login(email, password):
+def login_user(email, password):
 
     if not email:
       print("Please enter your email")

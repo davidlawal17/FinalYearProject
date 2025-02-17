@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify
 import json
 import pyrebase
-from fauth import signup, login
+from fauth import signup, login_user
 app = Flask(__name__)
 
 @app.route('/')
@@ -37,7 +37,7 @@ def login():
 
     try:
         # Attempt to log in the user with Firebase Authentication
-        user = login(email, password)
+        user = login_user(email, password)
         # Optionally, handle session or token management here
         return jsonify({"message": "User logged in successfully", "user": user}), 200
     except Exception as e:
