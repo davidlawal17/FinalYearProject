@@ -18,3 +18,6 @@ More specifcally I am to,
 2. Work on the frontend development, in terms of basic components such as the homepage(dashboard). The aim here is not to completely finish the frontend, but have Completed enough to have a competent workable demo for the interview
 3. I aim on a core functional feature, which i will decided later on in the week, probably the Property search and filter.
 4. Start Creating a presentation for my interview next week
+
+Week Monday 17th February- Sunday 23rd February 
+This is a continuation of what I was working on the previous week. I have made significant progress with implementing the backend of the user authentication system. This week i will focus on intergating the PostgreSQL database, after that I focus on implementing some frontend features, so I can see the authentication process in action. Then as stated before, I will begin woring on a core featurw which I have decied will be the property search and filter, and prepare for my interview.
