@@ -23,64 +23,41 @@ auth=firebase.auth()
 
 #Defining a create account function
 def signup(email, password):
-                 #Checks whether the user typed their email
+    email = email.strip()  # Remove leading/trailing whitespace from email
+    password = password.strip()  # Remove leading/trailing whitespace from password
+
     if not email:
-      print("Error: Email cannot be empty. Please try again.")
-
-
-           #Check whether user has typed their password
+        raise ValueError("Email cannot be empty")
     if not password:
-      print("Error: Password cannot be empty. Please try again.")
+        raise ValueError("Password cannot be empty")
 
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+        print("User registered successfully!")
+        return user
+    except Exception as e:
+        error_json = e.args[1]
+        error = json.loads(error_json)['error']['message']
+        raise Exception(f"Registration unsuccessful: {error}")
 
-    try:                #Tries to create an account
-      user = auth.create_user_with_email_and_password(email, password)
-      print("User created successfully!")
-      return user
-    except Exception as e:             #error handling
-      error_json = e.args[1]           #Pyrebase includes error details in the second element of the string tuple, the line extracts that error
-      error = json.loads(error_json)['error']['message']   #parse the JSOn string and retrieve/ assign the error message
-      if error == "EMAIL_EXISTS":
-        print("Error: The email address is already in use. Please use a different email.")
-      elif error == "WEAK_PASSWORD":
-        print("Error: The password is too weak. Please choose a stronger password.")
-      elif error == "INVALID_EMAIL":
-        print("Error: The email address is not valid. Please enter a valid email.")
-      else:
-        print(f"An unexpected error occurred: {error}")
 
 
 
 def login_user(email, password):
+    email = email.strip()  # Remove whitespace
+    password = password.strip()
 
     if not email:
-      print("Please enter your email")
-
-
+        raise ValueError("Email cannot be empty")
     if not password:
-      print("Please enter your password")
+        raise ValueError("Password cannot be empty")
 
     try:
-      user = auth.sign_in_with_email_and_password(email, password)
-      print("User logged in successfully!")
-      return user
-
+        user = auth.sign_in_with_email_and_password(email, password)
+        print("User logged in successfully!")
+        return user
     except Exception as e:
-        try:
-            error_json = e.args[1]
-            error = json.loads(error_json)['error']['message']
-
-            if error == "INVALID_EMAIL":
-                print("Error: Invalid email address.")
-            elif error == "INVALID_PASSWORD":
-                print("Error: Incorrect password.")
-            elif error == "EMAIL_NOT_FOUND":
-                print("Error: No user found with that email.")
-            else:
-                print(f"Login unsuccessful. Please try again. (Error: {error})")
-        except:
-            print("Login unsuccessful. Please try again. (Unexpected error parsing response)")  #Fallback
-
-
-
+        error_json = e.args[1]
+        error = json.loads(error_json)['error']['message']
+        raise Exception(f"Login unsuccessful: {error}")
 
