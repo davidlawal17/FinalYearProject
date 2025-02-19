@@ -1,60 +1,55 @@
-#application routes
-from flask import Flask, request, jsonify
+# routes.py
+from flask import Blueprint, request, jsonify
 import json
-import pyrebase
 from fauth import signup, login_user
 from fconfig import verify_token
+from models import User
+from extensions import db  # Import db if you need to reference it directly
 
-app = Flask(__name__)
+bp = Blueprint('main', __name__)
 
-@app.route('/')
+@bp.route('/')
 def index():
     return "Welcome to Investr API!"
-#sign up route
-@app.route('/api/register', methods=['POST'])
+
+@bp.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
-    email = data.get('email', "").strip()
-    password = data.get('password', "").strip()
-
+    email = data.get('email')
+    password = data.get('password')
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
-
     try:
-        user = signup(email, password)
-
-        return jsonify({"message": "User registered successfully", "user": user}), 201
+        user_data = signup(email, password)
+        firebase_uid = user_data.get("localId")
+        existing_user = User.query.filter_by(firebase_uid=firebase_uid).first()
+        if not existing_user:
+            new_user = User(firebase_uid=firebase_uid, email=email)
+            db.session.add(new_user)
+            db.session.commit()
+        return jsonify({"message": "User registered successfully", "user": user_data}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/login', methods=['POST'])
+@bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email', "").strip()
     password = data.get('password', "").strip()
-
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
-
     try:
-        user = login_user(email, password)
-        return jsonify({"message": "User logged in successfully", "user": user}), 200
+        user_data = login_user(email, password)
+        return jsonify({"message": "User logged in successfully", "user": user_data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-@app.route('/api/protected', methods=['GET'])
+@bp.route('/api/protected', methods=['GET'])
 def protected():
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({"error": "No token provided"}), 401
-
     decoded = verify_token(token)
     if not decoded:
         return jsonify({"error": "Unauthorized"}), 401
-
     return jsonify({"message": "Access granted", "user": decoded}), 200
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
