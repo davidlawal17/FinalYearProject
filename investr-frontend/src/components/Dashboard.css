@@ -1,0 +1,16 @@
+/* Center the dashboard content */
+.dashboard-container {
+  text-align: center;
+  margin-top: 20vh;
+  color: #eaeaea;
+}
+
+.dashboard-container h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #7fb3d5;
+}
+
+.dashboard-container p {
+  font-size: 1.2rem;
+}

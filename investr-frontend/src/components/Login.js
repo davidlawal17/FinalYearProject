@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,7 +21,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Login successful!');
+        login(data.user); // Set user in context
+        navigate('/dashboard'); // Redirect to dashboard
       } else {
         alert(`Login failed: ${data.error}`);
       }
