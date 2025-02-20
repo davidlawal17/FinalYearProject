@@ -24,8 +24,8 @@ auth=firebase.auth()
 
 #Defining a create account function
 def signup(email, password):
-    email = email.strip()  # Remove leading/trailing whitespace from email
-    password = password.strip()  # Remove leading/trailing whitespace from password
+    email = email.strip()
+    password = password.strip()
 
     if not email:
         raise ValueError("Email cannot be empty")
@@ -37,15 +37,22 @@ def signup(email, password):
         print("User registered successfully!")
         return user
     except Exception as e:
-        error_json = e.args[1]
-        error = json.loads(error_json)['error']['message']
-        raise Exception(f"Registration unsuccessful: {error}")
+        # Log full error response from Firebase
+        print("Firebase Registration Error:", e)
+        try:
+            error_json = e.args[1]
+            error = json.loads(error_json)['error']['message']
+            print("Specific Firebase Error:", error)  # e.g., EMAIL_EXISTS, WEAK_PASSWORD
+            raise Exception(f"Registration unsuccessful: {error}")
+        except:
+            print(" Error parsing Firebase response")
+            raise Exception("Registration failed due to an unexpected error")
 
 
 
 
 def login_user(email, password):
-    email = email.strip()  # Remove whitespace
+    email = email.strip()
     password = password.strip()
 
     if not email:
@@ -58,7 +65,13 @@ def login_user(email, password):
         print("User logged in successfully!")
         return user
     except Exception as e:
-        error_json = e.args[1]
-        error = json.loads(error_json)['error']['message']
-        raise Exception(f"Login unsuccessful: {error}")
-
+        # Log full error response from Firebase
+        print("Firebase Login Error:", e)
+        try:
+            error_json = e.args[1]
+            error = json.loads(error_json)['error']['message']
+            print("Specific Firebase Error:", error)  # This will print detailed error like EMAIL_NOT_FOUND or INVALID_PASSWORD
+            raise Exception(f"Login unsuccessful: {error}")
+        except:
+            print("Error parsing Firebase response")
+            raise Exception("Login failed due to an unexpected error")

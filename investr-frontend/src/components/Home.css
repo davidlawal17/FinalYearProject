@@ -1,0 +1,17 @@
+/* src/components/Home.css */
+
+.home-container {
+  text-align: center;
+  padding-top: 15vh;
+  color: #EAEDED;
+}
+
+.home-container h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.home-container p {
+  font-size: 1.5rem;
+  color: #7FB3D5;
+}

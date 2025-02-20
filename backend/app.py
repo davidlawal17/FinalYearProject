@@ -1,23 +1,25 @@
-import os
 from flask import Flask
+from flask_cors import CORS
 from dotenv import load_dotenv
-from extensions import db  # Import the centralized db instance
+from extensions import db  # Assuming you're using SQLAlchemy
 
 load_dotenv()
 
 app = Flask(__name__)
 
+# CORS Configuration to allow requests from React app running on localhost:3000
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
+# Database Configuration
+import os
 db_url = os.environ['DATABASE_URL']
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize the centralized SQLAlchemy instance with your app
 db.init_app(app)
-print("Using database URL:", os.environ.get('DATABASE_URL'))
 
-# Import and register blueprints after the app and db are set up
+# Import and register blueprints
 from routes import bp
 app.register_blueprint(bp)
 
