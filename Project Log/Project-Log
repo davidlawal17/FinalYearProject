@@ -24,3 +24,5 @@ This is a continuation of what I was working on the previous week. I have made s
 
 Week Monday 24th February- Sunday 2nd March
 I have compeleted the user authentication, integrated PostgreSQL for the backend, and have implemented some frontend design. Now I am focsuing on devloping and implementing my core features: which are the property search and filter feature , the recommendation system and the simulation system. I will start with the property search and filter feature.
+- I have thought of new features to add which I didn't mention in my interim report. These features are a "save property" feature, which allows the user to save properties which they like, the other is a "news" or "trending feature", which displays relevant information about the real estate market. Additionally, I want to remove the "begginers guide" feature as in accordance to the feedback I recived from my interim report, I don;t think it's an efficinet use of my time to gain technical marks
+The "save property" feature and "news/trending" is a more efficient use of my time which are both more technical
