@@ -1,5 +1,6 @@
+// src/components/Login.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
@@ -22,9 +23,9 @@ const Login = () => {
 
       if (response.ok) {
         login(data.user); // Set user in context
-        navigate('/dashboard'); // Redirect to dashboard
+        navigate('/dashboard'); // Redirect to dashboard on successful login
       } else {
-        alert(`Login failed: ${data.error}`);
+        alert(`Login failed: ${data.error || 'Invalid credentials'}`);
       }
     } catch (error) {
       alert('An unexpected error occurred during login.');
@@ -33,7 +34,7 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <h2>Login</h2>
+      <h2>Sign In</h2>
       <form onSubmit={handleLogin} className="auth-form">
         <input
           type="email"
@@ -51,6 +52,10 @@ const Login = () => {
         />
         <button type="submit">Login</button>
       </form>
+      {/* Message with link to register */}
+      <p className="auth-message">
+        Haven't got an account? <Link to="/register">Create one</Link>
+      </p>
     </div>
   );
 };

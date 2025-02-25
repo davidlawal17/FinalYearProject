@@ -1,9 +1,12 @@
+// src/components/Register.js
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -18,6 +21,7 @@ const Register = () => {
 
       if (response.ok) {
         alert('Registration successful! Please log in.');
+        navigate('/login'); // Redirect to login after registration
       } else {
         alert(`Registration failed: ${data.error}`);
       }
@@ -28,7 +32,7 @@ const Register = () => {
 
   return (
     <div className="auth-container">
-      <h2>Register</h2>
+      <h2>Create Account</h2>
       <form onSubmit={handleRegister} className="auth-form">
         <input
           type="email"
