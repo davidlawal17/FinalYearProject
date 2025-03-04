@@ -3,8 +3,9 @@ from flask import Blueprint, request, jsonify
 import json
 from fauth import signup, login_user
 from fconfig import verify_token
-from models import User
+from models import User, Property
 from extensions import db  # Import db if you need to reference it directly
+from sqlalchemy import and_
 
 bp = Blueprint('main', __name__)
 
@@ -53,3 +54,49 @@ def protected():
     if not decoded:
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify({"message": "Access granted", "user": decoded}), 200
+
+@bp.route('/api/properties', methods=['GET'])
+def get_properties():
+    location = request.args.get('location')
+    min_price = request.args.get('min_price', type=int)
+    max_price = request.args.get('max_price', type=int)
+    property_type = request.args.get('property_type')
+    min_bedrooms = request.args.get('min_bedrooms', type=int)
+
+    query = Property.query  # Start query on properties table
+
+    filters = []
+    if location:
+        filters.append(Property.location.ilike(f"%{location}%"))
+    if min_price is not None:
+        filters.append(Property.price >= min_price)
+    if max_price is not None:
+        filters.append(Property.price <= max_price)
+    if property_type:
+        filters.append(Property.property_type.ilike(property_type))
+    if min_bedrooms is not None:
+        filters.append(Property.bedrooms >= min_bedrooms)
+
+    if filters:
+        query = query.filter(and_(*filters))
+
+    properties = query.all()
+
+    properties_list = []
+    for property in properties:
+        properties_list.append({
+            "id": property.id,
+            "title": property.title,
+            "price": property.price,
+            "location": property.location,
+            "bedrooms": property.bedrooms,
+            "bathrooms": property.bathrooms,
+            "property_type": property.property_type,
+            "description": property.description,
+            "image_url": property.image_url,
+            "created_by": property.created_by,
+            "source": property.source,
+            "created_at": property.created_at
+        })
+
+    return jsonify(properties_list), 200
