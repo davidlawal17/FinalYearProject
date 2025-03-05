@@ -1,0 +1,37 @@
+.property-list-container {
+  padding: 2rem;
+  color: #EAEDED;
+}
+
+.property-list-container h1 {
+  margin-bottom: 1rem;
+  color: #7FB3D5;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filter-bar input, .filter-bar select, .filter-bar button {
+  padding: 10px;
+  border: 1px solid #7FB3D5;
+  border-radius: 5px;
+}
+
+.filter-bar button {
+  background-color: #005A8D;
+  color: white;
+  cursor: pointer;
+}
+
+.filter-bar button:hover {
+  background-color: #003B5C;
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
