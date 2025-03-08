@@ -31,3 +31,7 @@ Week Monday 3rd March - Sundy 9th March
 This week I am continuing on developing the property filter and search feature. After experimenting with my code during last week, I decided to change my approach. The API which I initally planned to use was not suitable
 for the property search and filter , as the data was not to do with indiviual prperties, but was conclusions on properties in specific postcodes: therefore it's not suitable for property listings. I then tried to web scrape to obtain data for this feature, however I ran into some issues (companies don't want their sites being scraped for free). After brainstorming, I decided to go with a "crowdsourced" approach. Meaning that the users can upload their own properties to sell. However I will initally upload some properties, to get the ball rolling
 Whether these properties which i intially upload, will be real or not, is something which I am contemplating.
+
+Update:
+I have implemented a working property search and filter feature. Based on my experience implemnting this feature, I have decided that the properties listed on this festure will not be real, however they will be as realistic as possible to give an accurate account of the property market>
+I am now working on the save property feature, which allows the users to save their favourite property. I am yet to add a sell feature where users can post properties which they want to sell. I am not sure If I will add this do to time constraints/difficulty.
