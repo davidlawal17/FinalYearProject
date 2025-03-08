@@ -1,4 +1,3 @@
-// src/components/Navbar.js
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -19,10 +18,13 @@ const Navbar = () => {
       <ul className="nav-links">
         <li><Link to="/">Home</Link></li>
         {!user ? (
-          // Single Sign In link when not authenticated
+          // Show sign-in when not authenticated
           <li><Link to="/login">Sign In</Link></li>
         ) : (
-          <li><button onClick={handleLogout}>Logout</button></li>
+          <>
+            <li><Link to="/favourites">View Favourites</Link></li>  {/* New Favourites Button */}
+            <li><button onClick={handleLogout}>Logout</button></li>
+          </>
         )}
       </ul>
     </nav>

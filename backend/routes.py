@@ -3,9 +3,10 @@ from flask import Blueprint, request, jsonify
 import json
 from fauth import signup, login_user
 from fconfig import verify_token
-from models import User, Property
+from models import User, Property,Favorite
 from extensions import db  # Import db if you need to reference it directly
 from sqlalchemy import and_
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 bp = Blueprint('main', __name__)
 
@@ -57,7 +58,8 @@ def protected():
 
 @bp.route('/api/properties', methods=['GET'])
 def get_properties():
-    location = request.args.get('location')
+    # Fetch multiple locations from query params - supports multi-select
+    locations = request.args.getlist('location')  # Now supports multiple areas
     min_price = request.args.get('min_price', type=int)
     max_price = request.args.get('max_price', type=int)
     property_type = request.args.get('property_type')
@@ -66,14 +68,18 @@ def get_properties():
     query = Property.query  # Start query on properties table
 
     filters = []
-    if location:
-        filters.append(Property.location.ilike(f"%{location}%"))
+    if locations:
+        filters.append(Property.location.in_(locations))  # Check if in selected areas
+
     if min_price is not None:
         filters.append(Property.price >= min_price)
+
     if max_price is not None:
         filters.append(Property.price <= max_price)
+
     if property_type:
         filters.append(Property.property_type.ilike(property_type))
+
     if min_bedrooms is not None:
         filters.append(Property.bedrooms >= min_bedrooms)
 
@@ -97,6 +103,49 @@ def get_properties():
             "created_by": property.created_by,
             "source": property.source,
             "created_at": property.created_at
+        })
+
+    return jsonify(properties_list), 200
+
+@bp.route('/api/favourites', methods=['POST'])
+@jwt_required()  # Ensure user is logged in
+def save_favourite():
+    user_id = get_jwt_identity()  # Get the logged-in user's ID
+    data = request.get_json()
+    property_id = data.get('property_id')
+
+    # Check if already saved
+    existing_favourite = Favorite.query.filter_by(user_id=user_id, property_id=property_id).first()
+    if existing_favourite:
+        return jsonify({"message": "Property already saved"}), 400
+
+    # Save new favourite
+    new_favourite = Favorite(user_id=user_id, property_id=property_id)
+    db.session.add(new_favourite)
+    db.session.commit()
+
+    return jsonify({"message": "Property saved!"}), 201
+
+@bp.route('/api/favourites', methods=['GET'])
+@jwt_required()
+def get_favourites():
+    user_id = get_jwt_identity()
+
+    # Query all properties saved by the user
+    saved_properties = db.session.query(Property).join(Favorite).filter(Favorite.user_id == user_id).all()
+
+    properties_list = []
+    for property in saved_properties:
+        properties_list.append({
+            "id": property.id,
+            "title": property.title,
+            "price": property.price,
+            "location": property.location,
+            "bedrooms": property.bedrooms,
+            "bathrooms": property.bathrooms,
+            "property_type": property.property_type,
+            "description": property.description,
+            "image_url": property.image_url
         })
 
     return jsonify(properties_list), 200
