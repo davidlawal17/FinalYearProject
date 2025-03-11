@@ -35,3 +35,7 @@ Whether these properties which i intially upload, will be real or not, is someth
 Update:
 I have implemented a working property search and filter feature. Based on my experience implemnting this feature, I have decided that the properties listed on this festure will not be real, however they will be as realistic as possible to give an accurate account of the property market>
 I am now working on the save property feature, which allows the users to save their favourite property. I am yet to add a sell feature where users can post properties which they want to sell. I am not sure If I will add this do to time constraints/difficulty.
+
+Week Monday 10th March - Sunday 16th March
+This week I am continuing my work on implementing the save property feature, as stated in my last Update. By the end of this week I hope to have this completed, So I can move onto the two most complex features which are the simulation and recommendation feature. 
+If I manage to finish the save property feature before the end of the week, I will get started on the news/trending feature
