@@ -1,0 +1,15 @@
+.favourites-container {
+  padding: 2rem;
+  color: #EAEDED;
+}
+
+.favourites-container h1 {
+  color: #7FB3D5;
+  margin-bottom: 1rem;
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}

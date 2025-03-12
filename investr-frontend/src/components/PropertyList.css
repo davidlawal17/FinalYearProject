@@ -1,0 +1,78 @@
+.property-list-container {
+  padding: 2rem;
+  color: #EAEDED;
+}
+
+.property-list-container h1 {
+  margin-bottom: 1rem;
+  color: #7FB3D5;
+  text-align: center;
+  font-size: 2rem;
+}
+
+/* Updated filter-bar to ensure react-select works well with spacing */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Input and Select styling */
+.filter-bar input,
+.filter-bar select {
+  padding: 10px;
+  flex: 1;
+  min-width: 150px;
+  border: 1px solid #7FB3D5;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #003B5C;
+}
+
+/* Make sure the react-select container matches the other inputs */
+.filter-bar .filter-select {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Button styling */
+.filter-bar button {
+  background-color: #005A8D;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.filter-bar button:hover {
+  background-color: #003B5C;
+}
+
+/* Grid for properties */
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Flexible columns for better responsiveness */
+  gap: 20px;
+  padding: 1rem;
+}
+
+/* Optional - if you want some minor polish for each property card */
+.property-card {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.property-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 5px;
+}

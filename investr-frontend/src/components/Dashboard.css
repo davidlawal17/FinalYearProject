@@ -1,0 +1,44 @@
+.dashboard-container {
+  text-align: center;
+  margin-top: 10vh;
+  color: #EAEDED;
+}
+
+.dashboard-container h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #7FB3D5;
+}
+
+.dashboard-container p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.dashboard-buttons button {
+  padding: 15px;
+  font-size: 1.1rem;
+  background-color: #005A8D;
+  color: #EAEDED;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dashboard-buttons button:hover {
+  background-color: #003B5C;
+  transform: scale(1.05);
+}

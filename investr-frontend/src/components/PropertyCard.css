@@ -1,0 +1,49 @@
+.property-card {
+  background-color: rgba(0, 31, 63, 0.85);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: left;
+  color: #EAEDED;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+/* Hover effect */
+.property-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Enlarged effect when clicked */
+.property-card:active {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.property-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.property-card h3 {
+  margin: 10px 0;
+  color: #7FB3D5;
+}
+
+.property-card button {
+  margin-top: 10px;
+  width: 100%;
+  background-color: #005A8D;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.property-card button:hover {
+  background-color: #003B5C;
+}
