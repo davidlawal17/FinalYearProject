@@ -36,7 +36,7 @@ def signup(email, password):
         user = auth.create_user_with_email_and_password(email, password)
         print("User registered successfully!")
 
-        # 🔹 Extract the firebase_uid (localId) from Firebase response
+        #  Extract the firebase_uid (localId) from Firebase response
         firebase_uid = user.get("localId")  # Ensure localId is returned
 
         if not firebase_uid:
