@@ -23,8 +23,8 @@ db.init_app(app)
 
 # 🔹 Load JWT secret key & algorithm
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Ensure secret key is set
-app.config['JWT_ALGORITHM'] = 'HS256'  # Explicitly setting the algorithm
-app.config['JWT_DECODE_ALGORITHMS'] = ['HS256']  # Ensures only HS256 is used
+#app.config['JWT_ALGORITHM'] = 'HS256'  # Explicitly setting the algorithm
+#app.config['JWT_DECODE_ALGORITHMS'] = ['HS256']  # Ensures only HS256 is used
 
 jwt = JWTManager(app)  # Initialize JWT
 

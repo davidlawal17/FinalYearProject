@@ -6,26 +6,39 @@ import './PropertyCard.css';
 const PropertyCard = ({ property }) => {
   const { user } = useAuth();
 
-  const handleSave = async () => {
-    if (!user) return alert('Please log in to save properties.');
+ const handleSave = async () => {
+  if (!user) {
+    alert('Please log in to save properties.');
+    return;
+  }
 
-    try {
-      const response = await fetch('/api/favourites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ property_id: property.id, user_id: user.uid })
-      });
+  const token = localStorage.getItem('token'); // Adjust based on where you store the token
+  if (!token) {
+    alert('Authentication token not found. Please log in again.');
+    return;
+  }
 
-      if (response.ok) {
-        alert('Saved to favourites!');
-      } else {
-        alert('Failed to save property.');
-      }
-    } catch (error) {
-      console.error('Error saving property:', error);
-      alert('An error occurred while saving the property.');
+  try {
+    const response = await fetch('/api/favourites', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // Include the JWT in the Authorization header
+      },
+      body: JSON.stringify({ property_id: property.id })
+    });
+
+    if (response.ok) {
+      alert('Saved to favourites!');
+    } else {
+      const errorData = await response.json();
+      alert(`Failed to save property: ${errorData.message}`);
     }
-  };
+  } catch (error) {
+    console.error('Error saving property:', error);
+    alert('An error occurred while saving the property.');
+  }
+};
 
   return (
     <div className="property-card">

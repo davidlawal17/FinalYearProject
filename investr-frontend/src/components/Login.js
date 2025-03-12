@@ -19,18 +19,19 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+     const data = await response.json();
 
-      if (response.ok) {
-        login(data.user); // Set user in context
-        navigate('/dashboard'); // Redirect to dashboard on successful login
-      } else {
-        alert(`Login failed: ${data.error || 'Invalid credentials'}`);
-      }
-    } catch (error) {
-      alert('An unexpected error occurred during login.');
+    if (response.ok) {
+      localStorage.setItem('token', data.access_token); // Store JWT token
+      login(data.user); // Set user in context
+      navigate('/dashboard'); // Redirect to dashboard
+    } else {
+      alert(`Login failed: ${data.error || 'Invalid credentials'}`);
     }
-  };
+  } catch (error) {
+    alert('An unexpected error occurred during login.');
+  }
+};
 
   return (
     <div className="auth-container">

@@ -6,7 +6,8 @@ from fconfig import verify_token
 from models import User, Property,Favorite
 from extensions import db  # Import db if you need to reference it directly
 from sqlalchemy import and_
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
+from datetime import timedelta
 
 bp = Blueprint('main', __name__)
 
@@ -14,37 +15,72 @@ bp = Blueprint('main', __name__)
 def index():
     return "Welcome to Investr API!"
 
+
 @bp.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
+
     try:
         user_data = signup(email, password)
-        firebase_uid = user_data.get("localId")
+
+        # Extract firebase_uid from Firebase response
+        firebase_uid = user_data.get("localId")  # Firebase assigns a unique ID
+
+        if not firebase_uid:
+            return jsonify({"error": "Firebase registration failed, no UID received"}), 500
+
+        # Check if user already exists in PostgreSQL
         existing_user = User.query.filter_by(firebase_uid=firebase_uid).first()
+
         if not existing_user:
-            new_user = User(firebase_uid=firebase_uid, email=email)
+            new_user = User(firebase_uid=firebase_uid, email=email)  # Explicitly set firebase_uid
             db.session.add(new_user)
-            db.session.commit()
-        return jsonify({"message": "User registered successfully", "user": user_data}), 201
+            db.session.commit()  #  Ensure commit only happens after setting firebase_uid
+
+        return jsonify({
+            "message": "User registered successfully",
+            "user": {"firebase_uid": firebase_uid, "email": email}
+        }), 201
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 @bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get('email', "").strip()
     password = data.get('password', "").strip()
+
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
+
     try:
         user_data = login_user(email, password)
-        return jsonify({"message": "User logged in successfully", "user": user_data}), 200
+        print("DEBUG: user_data retrieved from Firebase:", user_data)  # Debugging
+
+        if 'firebase_uid' not in user_data:
+            return jsonify({"error": "firebase_uid missing from user data"}), 400
+
+        user = User.query.filter_by(firebase_uid=user_data['firebase_uid']).first()
+        if not user:
+            return jsonify({"error": "User not found in database"}), 404
+
+        access_token = create_access_token(identity=user.firebase_uid, expires_delta=timedelta(hours=1))
+        return jsonify({
+            "message": "User logged in successfully",
+            "user": user_data,
+            "access_token": access_token
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
 
 @bp.route('/api/protected', methods=['GET'])
 def protected():
