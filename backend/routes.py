@@ -26,21 +26,23 @@ def register():
         return jsonify({"error": "Email and password are required"}), 400
 
     try:
-        user_data = signup(email, password)
+        user_data = signup(email, password)  # Call Firebase signup
+        print("DEBUG: Firebase user_data:", user_data)  # Log Firebase response
 
-        # Extract firebase_uid from Firebase response
-        firebase_uid = user_data.get("localId")  # Firebase assigns a unique ID
-
+        firebase_uid = user_data.get("firebase_uid")
         if not firebase_uid:
             return jsonify({"error": "Firebase registration failed, no UID received"}), 500
 
         # Check if user already exists in PostgreSQL
         existing_user = User.query.filter_by(firebase_uid=firebase_uid).first()
+        if existing_user:
+            return jsonify({"error": "User already exists in database"}), 400
 
-        if not existing_user:
-            new_user = User(firebase_uid=firebase_uid, email=email)  # Explicitly set firebase_uid
-            db.session.add(new_user)
-            db.session.commit()  #  Ensure commit only happens after setting firebase_uid
+        #  Save user to PostgreSQL
+        new_user = User(firebase_uid=firebase_uid, email=email)
+        db.session.add(new_user)
+        db.session.commit()
+        print(" User successfully saved to PostgreSQL!")
 
         return jsonify({
             "message": "User registered successfully",
@@ -48,7 +50,9 @@ def register():
         }), 201
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        print(" ERROR in /api/register:", str(e))  # Log the full error
+        return jsonify({"error": str(e)}), 500  # Return error message
+
 
 
 @bp.route('/api/login', methods=['POST'])
@@ -61,24 +65,25 @@ def login():
         return jsonify({"error": "Email and password are required"}), 400
 
     try:
-        user_data = login_user(email, password)
-        print("DEBUG: user_data retrieved from Firebase:", user_data)  # Debugging
+        user_data = login_user(email, password)  # Calls Firebase authentication
+        firebase_uid = user_data.get("firebase_uid")
 
-        if 'firebase_uid' not in user_data:
-            return jsonify({"error": "firebase_uid missing from user data"}), 400
-
-        user = User.query.filter_by(firebase_uid=user_data['firebase_uid']).first()
+        user = User.query.filter_by(firebase_uid=firebase_uid).first()
         if not user:
             return jsonify({"error": "User not found in database"}), 404
 
+        # Generate JWT token for authentication
         access_token = create_access_token(identity=user.firebase_uid, expires_delta=timedelta(hours=1))
+
         return jsonify({
             "message": "User logged in successfully",
             "user": user_data,
             "access_token": access_token
         }), 200
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        print(" ERROR in /api/login:", str(e))  # Debugging
+        return jsonify({"error": str(e)}), 400  # Return specific error message
 
 
 

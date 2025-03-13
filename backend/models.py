@@ -4,8 +4,8 @@ from extensions import db
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.String, primary_key=True)   # Firebase UID or numeric string after migration
-    firebase_uid = db.Column(db.String(128), unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # ✅ Auto-generated ID
+    firebase_uid = db.Column(db.String(128), unique=True, nullable=False)  # Firebase UID remains unique
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

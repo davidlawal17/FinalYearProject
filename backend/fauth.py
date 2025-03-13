@@ -34,32 +34,32 @@ def signup(email, password):
 
     try:
         user = auth.create_user_with_email_and_password(email, password)
-        print("User registered successfully!")
+        print(" DEBUG: Firebase Response:", user)  # Print full Firebase response
 
-        #  Extract the firebase_uid (localId) from Firebase response
-        firebase_uid = user.get("localId")  # Ensure localId is returned
-
-        if not firebase_uid:
+        #  Check the exact structure of Firebase response
+        if 'localId' in user:
+            firebase_uid = user['localId']  # Direct extraction if present at top-level
+        elif 'user' in user and 'localId' in user['user']:
+            firebase_uid = user['user']['localId']  # Extraction from nested structure
+        else:
+            print(" ERROR: Firebase response does not contain localId!")
             raise Exception("Firebase registration failed: No UID received")
 
         return {
-            "firebase_uid": firebase_uid,  # Explicitly return UID
+            "firebase_uid": firebase_uid,
             "email": email
         }
 
     except Exception as e:
-        # Log full error response from Firebase
-        print("Firebase Registration Error:", e)
+        print(" ERROR in signup():", str(e))  # Log the full error for debugging
         try:
             error_json = e.args[1]
             error = json.loads(error_json)['error']['message']
-            print("Specific Firebase Error:", error)  # e.g., EMAIL_EXISTS, WEAK_PASSWORD
+            print(" Specific Firebase Error:", error)
             raise Exception(f"Registration unsuccessful: {error}")
-        except:
-            print("Error parsing Firebase response")
+        except Exception as parse_error:
+            print(" Error parsing Firebase response:", str(parse_error))
             raise Exception("Registration failed due to an unexpected error")
-
-
 
 
 def login_user(email, password):
@@ -75,20 +75,36 @@ def login_user(email, password):
         user = auth.sign_in_with_email_and_password(email, password)
         print("User logged in successfully!")
 
-        #  Extract firebase_uid from the Firebase response
+        # Extract firebase_uid from the Firebase response
         firebase_uid = auth.get_account_info(user['idToken'])['users'][0]['localId']
 
         return {
-            "firebase_uid": firebase_uid,  # Ensure this is returned
+            "firebase_uid": firebase_uid,
             "email": email
         }
+
     except Exception as e:
-        print("Firebase Login Error:", e)
+        print(" Firebase Login Error:", str(e))  # Debugging full error
+
         try:
             error_json = e.args[1]
-            error = json.loads(error_json)['error']['message']
-            print("Specific Firebase Error:", error)
-            raise Exception(f"Login unsuccessful: {error}")
-        except:
-            print("Error parsing Firebase response")
-            raise Exception("Login failed due to an unexpected error")
+            error_response = json.loads(error_json)
+            error_message = error_response['error']['message']
+
+            #  Handle Specific Firebase Authentication Errors
+            if error_message == "EMAIL_NOT_FOUND":
+                raise Exception("No account found with this email.")
+            elif error_message == "INVALID_PASSWORD":
+                raise Exception("Incorrect password. Please try again.")
+            elif error_message == "INVALID_LOGIN_CREDENTIALS":
+                raise Exception("Invalid email or password. Please check your details.")
+            elif error_message == "USER_DISABLED":
+                raise Exception("This account has been disabled. Contact support.")
+            elif error_message == "TOO_MANY_ATTEMPTS_TRY_LATER":
+                raise Exception("Too many failed attempts. Try again later.")
+            else:
+                raise Exception(f"Login failed: {error_message}")
+
+        except Exception as parse_error:
+            print(" Error parsing Firebase response:", str(parse_error))
+            raise Exception("Login failed, ensure your credentials are correct.")
