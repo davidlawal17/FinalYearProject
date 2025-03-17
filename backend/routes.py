@@ -85,22 +85,9 @@ def login():
         print(" ERROR in /api/login:", str(e))  # Debugging
         return jsonify({"error": str(e)}), 400  # Return specific error message
 
-
-
-@bp.route('/api/protected', methods=['GET'])
-def protected():
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({"error": "No token provided"}), 401
-    decoded = verify_token(token)
-    if not decoded:
-        return jsonify({"error": "Unauthorized"}), 401
-    return jsonify({"message": "Access granted", "user": decoded}), 200
-
 @bp.route('/api/properties', methods=['GET'])
 def get_properties():
-    # Fetch multiple locations from query params - supports multi-select
-    locations = request.args.getlist('location')  # Now supports multiple areas
+    locations = request.args.getlist('location')
     min_price = request.args.get('min_price', type=int)
     max_price = request.args.get('max_price', type=int)
     property_type = request.args.get('property_type')
@@ -110,7 +97,7 @@ def get_properties():
 
     filters = []
     if locations:
-        filters.append(Property.location.in_(locations))  # Check if in selected areas
+        filters.append(Property.location.in_(locations))
 
     if min_price is not None:
         filters.append(Property.price >= min_price)
@@ -129,55 +116,66 @@ def get_properties():
 
     properties = query.all()
 
-    properties_list = []
-    for property in properties:
-        properties_list.append({
-            "id": property.id,
-            "title": property.title,
-            "price": property.price,
-            "location": property.location,
-            "bedrooms": property.bedrooms,
-            "bathrooms": property.bathrooms,
-            "property_type": property.property_type,
-            "description": property.description,
-            "image_url": property.image_url,
-            "created_by": property.created_by,
-            "source": property.source,
-            "created_at": property.created_at
-        })
+    if not properties:
+        print("DEBUG: No properties found matching filters.")
+        return jsonify({"error": "No properties found"}), 404
+
+    properties_list = [{
+        "id": property.id,
+        "title": property.title,
+        "price": property.price,
+        "location": property.location,
+        "bedrooms": property.bedrooms,
+        "bathrooms": property.bathrooms,
+        "property_type": property.property_type,
+        "description": property.description,
+        "image_url": property.image_url,
+        "created_by": property.created_by,
+        "source": property.source
+    } for property in properties]
 
     return jsonify(properties_list), 200
 
-@bp.route('/api/favourites', methods=['POST'])
-@jwt_required()  # Ensure user is logged in
-def save_favourite():
-    user_id = get_jwt_identity()  # Get the logged-in user's ID
-    data = request.get_json()
-    property_id = data.get('property_id')
 
-    # Check if already saved
-    existing_favourite = Favorite.query.filter_by(user_id=user_id, property_id=property_id).first()
-    if existing_favourite:
-        return jsonify({"message": "Property already saved"}), 400
 
-    # Save new favourite
-    new_favourite = Favorite(user_id=user_id, property_id=property_id)
-    db.session.add(new_favourite)
-    db.session.commit()
 
-    return jsonify({"message": "Property saved!"}), 201
+@bp.route('/api/protected', methods=['GET'])
+def protected():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "No token provided"}), 401
+    decoded = verify_token(token)
+    if not decoded:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"message": "Access granted", "user": decoded}), 200
 
 @bp.route('/api/favourites', methods=['GET'])
 @jwt_required()
 def get_favourites():
-    user_id = get_jwt_identity()
+    try:
+        token = request.headers.get('Authorization')
+        print(f"DEBUG: Received Authorization Header: {token}")  #  Log token
 
-    # Query all properties saved by the user
-    saved_properties = db.session.query(Property).join(Favorite).filter(Favorite.user_id == user_id).all()
+        user_id = get_jwt_identity()
+        print(f"DEBUG: Extracted user_id from token: {user_id}")  #  Log extracted user ID
 
-    properties_list = []
-    for property in saved_properties:
-        properties_list.append({
+        if not user_id:
+            print(" ERROR: No user ID extracted from token.")
+            return jsonify({"error": "Authentication failed. Invalid token."}), 401
+
+        # Fetch all saved properties for this user
+        favourites = (
+            db.session.query(Property)
+            .join(Favorite, Favorite.property_id == Property.id)
+            .filter(Favorite.user_id == user_id)
+            .all()
+        )
+
+        if not favourites:
+            print("DEBUG: No saved properties found for user.")
+            return jsonify([]), 200  #  Return empty list instead of error
+
+        properties_list = [{
             "id": property.id,
             "title": property.title,
             "price": property.price,
@@ -187,6 +185,79 @@ def get_favourites():
             "property_type": property.property_type,
             "description": property.description,
             "image_url": property.image_url
-        })
+        } for property in favourites]
 
-    return jsonify(properties_list), 200
+        print(f" DEBUG: Retrieved {len(properties_list)} saved properties")
+        return jsonify(properties_list), 200
+
+    except Exception as e:
+        print(f" ERROR in /api/favourites: {str(e)}")
+        return jsonify({"error": "Failed to fetch saved properties", "details": str(e)}), 500
+
+
+@bp.route('/api/favourites', methods=['POST'])
+@jwt_required()
+def save_favourite():
+    try:
+        token = request.headers.get('Authorization')
+        print(f"DEBUG: Received Authorization Header: {token}")  #  Log token
+
+        user_id = get_jwt_identity()
+        print(f"DEBUG: Extracted user_id from token: {user_id}")  #  Log extracted user ID
+
+        data = request.get_json()
+        print(f"DEBUG: Received request data: {data}")  #  Log request body
+
+        property_id = data.get('property_id')
+
+        if not property_id:
+            print(" ERROR: Property ID is missing from request.")
+            return jsonify({"error": "Property ID is required"}), 400  #  Return clear error message
+
+        existing_favourite = Favorite.query.filter_by(user_id=user_id, property_id=property_id).first()
+        if existing_favourite:
+            print("️ Property already saved for this user.")
+            return jsonify({"error": "Property already saved"}), 400
+
+        new_favourite = Favorite(user_id=user_id, property_id=property_id)
+        db.session.add(new_favourite)
+        db.session.commit()
+
+        print(" Property successfully saved!")
+        return jsonify({"message": "Property saved successfully!"}), 201
+
+    except Exception as e:
+        print(" ERROR in /api/favourites:", str(e))
+        return jsonify({"error": "Failed to save property", "details": str(e)}), 500
+
+
+@bp.route('/api/favourites', methods=['DELETE'])
+@jwt_required()
+def remove_favourite():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        property_id = data.get('property_id')
+
+        if not property_id:
+            print(" ERROR: Property ID is missing from request.")
+            return jsonify({"error": "Property ID is required"}), 400
+
+        # Check if the property is saved
+        favourite = Favorite.query.filter_by(user_id=user_id, property_id=property_id).first()
+        if not favourite:
+            print(" ERROR: Property not found in favourites.")
+            return jsonify({"error": "Property not found in favourites"}), 404
+
+        # Remove property from favourites
+        db.session.delete(favourite)
+        db.session.commit()
+
+        print(f" Property {property_id} removed from favourites for user {user_id}")
+        return jsonify({"message": "Property removed from favourites"}), 200
+
+    except Exception as e:
+        print(" ERROR in /api/favourites (DELETE):", str(e))
+        return jsonify({"error": "Failed to remove property", "details": str(e)}), 500
+
+
