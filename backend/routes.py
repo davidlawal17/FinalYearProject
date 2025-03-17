@@ -231,5 +231,33 @@ def save_favourite():
         return jsonify({"error": "Failed to save property", "details": str(e)}), 500
 
 
+@bp.route('/api/favourites', methods=['DELETE'])
+@jwt_required()
+def remove_favourite():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        property_id = data.get('property_id')
+
+        if not property_id:
+            print(" ERROR: Property ID is missing from request.")
+            return jsonify({"error": "Property ID is required"}), 400
+
+        # Check if the property is saved
+        favourite = Favorite.query.filter_by(user_id=user_id, property_id=property_id).first()
+        if not favourite:
+            print(" ERROR: Property not found in favourites.")
+            return jsonify({"error": "Property not found in favourites"}), 404
+
+        # Remove property from favourites
+        db.session.delete(favourite)
+        db.session.commit()
+
+        print(f" Property {property_id} removed from favourites for user {user_id}")
+        return jsonify({"message": "Property removed from favourites"}), 200
+
+    except Exception as e:
+        print(" ERROR in /api/favourites (DELETE):", str(e))
+        return jsonify({"error": "Failed to remove property", "details": str(e)}), 500
 
 

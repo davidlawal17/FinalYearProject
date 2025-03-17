@@ -38,13 +38,23 @@ const Favourites = () => {
         fetchFavourites();
     }, [user]);
 
+    const handleRemoveFavourite = (propertyId) => {
+        setFavourites(favourites.filter(property => property.id !== propertyId));
+    };
+
     return (
         <div className="favourites-container">
             <h1>Your Saved Properties</h1>
             {favourites.length > 0 ? (
                 <div className="property-grid">
                     {favourites.map((property) => (
-                        <PropertyCard key={property.id} property={property} savedProperties={favourites || []} />
+                        <PropertyCard
+                            key={property.id}
+                            property={property}
+                            savedProperties={favourites}
+                            isFavouritePage={true}
+                            onRemoveFavourite={handleRemoveFavourite}
+                        />
                     ))}
                 </div>
             ) : (
