@@ -38,4 +38,15 @@ I am now working on the save property feature, which allows the users to save th
 
 Week Monday 10th March - Sunday 16th March
 This week I am continuing my work on implementing the save property feature, as stated in my last Update. By the end of this week I hope to have this completed, So I can move onto the two most complex features which are the simulation and recommendation feature. 
-If I manage to finish the save property feature before the end of the week, I will get started on the news/trending feature
+If I manage to finish the save property feature before the end of the week, I will get started on the news/trending feature.
+
+Week Monday 17th March - Sunday 22nd March
+Unfortnualtey I wasn't able to finish the save property feature last week, and will have to continue working on it this week. However, am I very close to completing it so it shoudln't take long. 
+One of the difficutlites I encountered with this was implemnting flask JWT (Json Web Token). I needed to set this to authenticate and protect my API endpoints, ensuring users could only access their specific data, so in this case ensuring that 
+each users saved property will be unique to them
+
+However I kept encounering errors, it got to a point where my web app wouldn't even render on the page and I was just seeing an error.
+The main cause of one of the errors which I encountered was using the wrong identifier. Since i am storing the users in tw sepatae database (Firebase for the authentication) and a PostgreSQl database (provided by Heroku) for the managment of user data and the application data,
+I needed to find a common identifier that can correctly link and identifiy each user. Initially I used "user id"  which was generated on my heroku database to be the primary key for the user table, however this didn't corretly identify each user. I lated realised it would be better to use the firebaseuid as an identifier. Although this would make the user id pretty much redundant I figured it would be more conveneient than making firebase uid the primary key, as I would have to make a lot of changes.
+
+This week the plan is to finish what I couldn't last week, and to make as much progress on coding as I can
