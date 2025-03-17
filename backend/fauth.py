@@ -59,7 +59,7 @@ def signup(email, password):
             raise Exception(f"Registration unsuccessful: {error}")
         except Exception as parse_error:
             print(" Error parsing Firebase response:", str(parse_error))
-            raise Exception("Registration failed due to an unexpected error")
+            raise Exception("Registration failed due to an unexpected error, please ensure your email is valid and your password is at least 6 characters long")
 
 
 def login_user(email, password):

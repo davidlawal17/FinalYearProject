@@ -1,32 +1,34 @@
-import os
 from flask import Flask
-from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate  # Import Flask-Migrate
 from flask_jwt_extended import JWTManager
+import os
 from dotenv import load_dotenv
 from extensions import db
+from flask_cors import CORS
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
-
 app = Flask(__name__)
+
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+jwt = JWTManager(app)
 
 # Enable CORS
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
-# Load Database URL
+# Configure the database
 db_url = os.getenv('DATABASE_URL')
 if db_url and db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions
 db.init_app(app)
-
-# 🔹 Load JWT secret key & algorithm
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Ensure secret key is set
-#app.config['JWT_ALGORITHM'] = 'HS256'  # Explicitly setting the algorithm
-#app.config['JWT_DECODE_ALGORITHMS'] = ['HS256']  # Ensures only HS256 is used
-
-jwt = JWTManager(app)  # Initialize JWT
+migrate = Migrate(app, db)  #  Initialize Flask-Migrate
+jwt = JWTManager(app)
 
 # Register Blueprints
 from routes import bp
