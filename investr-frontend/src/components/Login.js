@@ -1,4 +1,3 @@
-// src/components/Login.js
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -19,23 +18,25 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
-     const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      localStorage.setItem('token', data.access_token); // Store JWT token
-      login(data.user); // Set user in context
-      navigate('/dashboard'); // Redirect to dashboard
-    } else {
-      alert(`Login failed: ${data.error || 'Invalid credentials'}`);
+      if (response.ok) {
+        localStorage.setItem('token', data.access_token);
+        login(data.user);
+        navigate('/dashboard');
+      } else {
+        alert(`Login failed: ${data.error || 'Invalid credentials'}`);
+      }
+    } catch (error) {
+      alert('An unexpected error occurred during login.');
     }
-  } catch (error) {
-    alert('An unexpected error occurred during login.');
-  }
-};
+  };
 
   return (
     <div className="auth-container">
-      <h2>Sign In</h2>
+      <h1 className="welcome-message">Welcome to Investr</h1>
+      <h2 className="subtitle">Your real estate investment assistant</h2>
+
       <form onSubmit={handleLogin} className="auth-form">
         <input
           type="email"
@@ -53,9 +54,10 @@ const Login = () => {
         />
         <button type="submit">Login</button>
       </form>
-      {/* Message with link to register */}
+
+      {/*  Restored Sign-Up Link */}
       <p className="auth-message">
-        Haven't got an account? <Link to="/register">Create one</Link>
+        Haven't got an account? <Link to="/register">Sign Up</Link>
       </p>
     </div>
   );

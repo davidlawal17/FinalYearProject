@@ -1,16 +1,14 @@
-// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import PropertyList from './components/PropertyList';
 import Favourites from './components/Favourites';
-import Recommender from './components/Recommender';    // Placeholder or actual component
-import Simulation from './components/Simulation';      // Placeholder or actual component
-import NewsFeed from './components/NewsFeed';          // Placeholder or actual component
+import Recommender from './components/Recommender';
+import Simulation from './components/Simulation';
+import NewsFeed from './components/NewsFeed';
 import { useAuth } from './context/AuthContext';
 import './index.css';
 import backgroundImage from './assets/background-image.jpg';
@@ -32,16 +30,16 @@ const App = () => {
       <Router>
         <Navbar />
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/properties" element={<PropertyList />} />
+          {/* Default to Login Page */}
+          <Route path="/" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
 
           {/* Authenticated Routes */}
-          <Route path="/favourites" element={user ? <Favourites /> : <Navigate to="/login" />} />
-          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/recommender" element={user ? <Recommender /> : <Navigate to="/login" />} />
-          <Route path="/simulation" element={user ? <Simulation /> : <Navigate to="/login" />} />
-          <Route path="/news" element={user ? <NewsFeed /> : <Navigate to="/login" />} />
+          <Route path="/favourites" element={user ? <Favourites /> : <Navigate to="/" />} />
+          <Route path="/properties" element={user ? <PropertyList /> : <Navigate to="/" />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
+          <Route path="/recommender" element={user ? <Recommender /> : <Navigate to="/" />} />
+          <Route path="/simulation" element={user ? <Simulation /> : <Navigate to="/" />} />
+          <Route path="/news" element={user ? <NewsFeed /> : <Navigate to="/" />} />
 
           {/* Authentication Routes */}
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />

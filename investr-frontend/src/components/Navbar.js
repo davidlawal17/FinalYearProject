@@ -16,16 +16,12 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="logo">Investr</div>
       <ul className="nav-links">
-        <li><Link to="/">Home</Link></li>
-        {!user ? (
-          // Show sign-in when not authenticated
-          <li><Link to="/login">Sign In</Link></li>
-        ) : (
+        {user ? (
           <>
-            <li><Link to="/favourites">View Favourites</Link></li>  {/* New Favourites Button */}
+            <li><Link to="/favourites">View Favourites</Link></li>
             <li><button onClick={handleLogout}>Logout</button></li>
           </>
-        )}
+        ) : null}
       </ul>
     </nav>
   );
