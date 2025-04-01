@@ -87,83 +87,68 @@ def login():
 
 @bp.route('/api/properties', methods=['GET'])
 def get_properties():
-    locations = request.args.getlist('location')
-    min_price = request.args.get('min_price', type=int)
-    max_price = request.args.get('max_price', type=int)
-    property_type = request.args.get('property_type')
-    min_bedrooms = request.args.get('min_bedrooms', type=int)
+    try:
+        locations = request.args.getlist('location')
+        min_price = request.args.get('min_price', type=int)
+        max_price = request.args.get('max_price', type=int)
+        property_type = request.args.get('property_type')
+        min_bedrooms = request.args.get('min_bedrooms', type=int)
 
-    query = Property.query  # Start query on properties table
+        print(f"DEBUG: Searching properties with filters - Locations: {locations}, Min Price: {min_price}, Max Price: {max_price}, Type: {property_type}, Min Bedrooms: {min_bedrooms}")
 
-    filters = []
-    if locations:
-        filters.append(Property.location.in_(locations))
+        query = Property.query
 
-    if min_price is not None:
-        filters.append(Property.price >= min_price)
+        filters = []
+        if locations:
+            filters.append(Property.location.in_(locations))
 
-    if max_price is not None:
-        filters.append(Property.price <= max_price)
+        if min_price is not None:
+            filters.append(Property.price >= min_price)
 
-    if property_type:
-        filters.append(Property.property_type.ilike(property_type))
+        if max_price is not None:
+            filters.append(Property.price <= max_price)
 
-    if min_bedrooms is not None:
-        filters.append(Property.bedrooms >= min_bedrooms)
+        if property_type:
+            filters.append(Property.property_type.ilike(property_type))
 
-    if filters:
-        query = query.filter(and_(*filters))
+        if min_bedrooms is not None:
+            filters.append(Property.bedrooms >= min_bedrooms)
 
-    properties = query.all()
+        if filters:
+            query = query.filter(and_(*filters))
 
-    if not properties:
-        print("DEBUG: No properties found matching filters.")
-        return jsonify({"error": "No properties found"}), 404
+        properties = query.all()
 
-    properties_list = [{
-        "id": property.id,
-        "title": property.title,
-        "price": property.price,
-        "location": property.location,
-        "bedrooms": property.bedrooms,
-        "bathrooms": property.bathrooms,
-        "property_type": property.property_type,
-        "description": property.description,
-        "image_url": property.image_url,
-        "created_by": property.created_by,
-        "source": property.source
-    } for property in properties]
+        if not properties:
+            print("DEBUG: No properties found matching filters.")
+            return jsonify({"error": "No properties found"}), 404
 
-    return jsonify(properties_list), 200
+        properties_list = [{
+            "id": property.id,
+            "title": property.title,
+            "price": property.price,
+            "location": property.location,
+            "bedrooms": property.bedrooms,
+            "bathrooms": property.bathrooms,
+            "property_type": property.property_type,
+            "description": property.description,
+            "image_url": property.image_url,
+            "created_by": property.created_by,
+            "source": property.source
+        } for property in properties]
 
-
-
-
-@bp.route('/api/protected', methods=['GET'])
-def protected():
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({"error": "No token provided"}), 401
-    decoded = verify_token(token)
-    if not decoded:
-        return jsonify({"error": "Unauthorized"}), 401
-    return jsonify({"message": "Access granted", "user": decoded}), 200
+        return jsonify(properties_list), 200
+    except Exception as e:
+        print(f"🔥 ERROR in /api/properties: {str(e)}")
+        return jsonify({"error": "Failed to fetch properties", "details": str(e)}), 500
 
 @bp.route('/api/favourites', methods=['GET'])
 @jwt_required()
 def get_favourites():
     try:
-        token = request.headers.get('Authorization')
-        print(f"DEBUG: Received Authorization Header: {token}")  #  Log token
-
         user_id = get_jwt_identity()
-        print(f"DEBUG: Extracted user_id from token: {user_id}")  #  Log extracted user ID
+        print(f"DEBUG: Fetching favourites for user {user_id}")
 
-        if not user_id:
-            print(" ERROR: No user ID extracted from token.")
-            return jsonify({"error": "Authentication failed. Invalid token."}), 401
-
-        # Fetch all saved properties for this user
         favourites = (
             db.session.query(Property)
             .join(Favorite, Favorite.property_id == Property.id)
@@ -173,7 +158,7 @@ def get_favourites():
 
         if not favourites:
             print("DEBUG: No saved properties found for user.")
-            return jsonify([]), 200  #  Return empty list instead of error
+            return jsonify([]), 200
 
         properties_list = [{
             "id": property.id,
@@ -193,6 +178,18 @@ def get_favourites():
     except Exception as e:
         print(f" ERROR in /api/favourites: {str(e)}")
         return jsonify({"error": "Failed to fetch saved properties", "details": str(e)}), 500
+
+
+
+@bp.route('/api/protected', methods=['GET'])
+def protected():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"error": "No token provided"}), 401
+    decoded = verify_token(token)
+    if not decoded:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"message": "Access granted", "user": decoded}), 200
 
 
 @bp.route('/api/favourites', methods=['POST'])

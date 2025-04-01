@@ -30,3 +30,15 @@
   font-size: 1.1rem;
   color: #EAEDED;
 }
+.nav-links button {
+  background: none;
+  border: none;
+  color: #EAEDED;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.nav-links button:hover {
+  text-decoration: underline;
+}
