@@ -18,10 +18,12 @@ const Navbar = () => {
       <ul className="nav-links">
         {user ? (
           <>
-            <li><Link to="/favourites">View Favourites</Link></li>
+            <li><Link to="/dashboard">Home</Link></li>
             <li><button onClick={handleLogout}>Logout</button></li>
           </>
-        ) : null}
+        ) : (
+          <li><Link to="/login">Sign In</Link></li>
+        )}
       </ul>
     </nav>
   );
