@@ -54,3 +54,11 @@ This week the plan is to finish what I couldn't last week, and to make as much p
 
 Week Monday 31st March - Sunday 6th March
 I have missed out the last week from the project log, as I haven't been working on it due to the commitments and univesrity deadlines. The plan for this week is to pick up the pace on implemntating and developing, as I only have approximately a month left on this project.
+
+update- 
+I have managed to implemented an add property feature to my project. It allows the user to add properties to the property listing. I remember personal tutor basically saying it would be a good idea, so i decied to implement it.
+The challenging part about this was making sure the image uploads were stored and rendered correctly, which took quiet some time. Uploaded images weren't showing because the paths weren't aligned properly, also default images weren't dsiplaying.
+Another issue i ran into was being logged out after uploading an image, and this turned out to be an authentication token issue.
+After fixing these issues I refactored the backend to use current_app, instead of directly acessing app to vaoid import erros.
+
+Since we can now search for, view and add properties it only makes sense for me to add a way to remove propeties. I will try and implement this now.
