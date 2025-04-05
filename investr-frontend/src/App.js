@@ -9,6 +9,7 @@ import Favourites from './components/Favourites';
 import Recommender from './components/Recommender';
 import Simulation from './components/Simulation';
 import NewsFeed from './components/NewsFeed';
+import AddProperty from './components/AddProperty';
 import { useAuth } from './context/AuthContext';
 import './index.css';
 import backgroundImage from './assets/background-image.jpg';
@@ -35,6 +36,7 @@ const App = () => {
 
           {/* Authenticated Routes */}
           <Route path="/favourites" element={user ? <Favourites /> : <Navigate to="/" />} />
+          <Route path="/add-property" element={user ? <AddProperty /> : <Navigate to="/login" />} />
           <Route path="/properties" element={user ? <PropertyList /> : <Navigate to="/" />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
           <Route path="/recommender" element={user ? <Recommender /> : <Navigate to="/" />} />

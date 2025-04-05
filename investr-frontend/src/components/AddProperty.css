@@ -1,0 +1,33 @@
+.add-property-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: rgba(0, 31, 63, 0.85);
+  border-radius: 10px;
+  color: #EAEDED;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-property-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.add-property-form input,
+.add-property-form select,
+.add-property-form textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #7FB3D5;
+  background-color: white;
+  color: #003B5C;
+}
+
+.add-property-form button {
+  background-color: #005A8D;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+}

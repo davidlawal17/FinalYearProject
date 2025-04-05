@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -22,7 +23,9 @@ const Navbar = () => {
             <li><button onClick={handleLogout}>Logout</button></li>
           </>
         ) : (
-          <li><Link to="/login">Sign In</Link></li>
+          location.pathname !== '/login' && (
+            <li><Link to="/login">Sign In</Link></li>
+          )
         )}
       </ul>
     </nav>

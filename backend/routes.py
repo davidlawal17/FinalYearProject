@@ -1,13 +1,18 @@
 # routes.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 import json
 from fauth import signup, login_user
+from werkzeug.utils import secure_filename
 from fconfig import verify_token
 from models import User, Property,Favorite
 from extensions import db  # Import db if you need to reference it directly
 from sqlalchemy import and_
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
 from datetime import timedelta
+from utils import allowed_file
+import os
+
+UPLOAD_FOLDER = 'investr-frontend/public/images/properties'
 
 bp = Blueprint('main', __name__)
 
@@ -85,8 +90,13 @@ def login():
         print(" ERROR in /api/login:", str(e))  # Debugging
         return jsonify({"error": str(e)}), 400  # Return specific error message
 
-@bp.route('/api/properties', methods=['GET'])
-def get_properties():
+@bp.route('/api/properties', methods=['GET', 'POST'])
+def properties_handler():
+    if request.method == 'GET':
+        return handle_get_properties()
+    elif request.method == 'POST':
+        return handle_post_property()
+def handle_get_properties():
     try:
         locations = request.args.getlist('location')
         min_price = request.args.get('min_price', type=int)
@@ -139,8 +149,58 @@ def get_properties():
 
         return jsonify(properties_list), 200
     except Exception as e:
-        print(f"🔥 ERROR in /api/properties: {str(e)}")
+        print(f" ERROR in /api/properties: {str(e)}")
         return jsonify({"error": "Failed to fetch properties", "details": str(e)}), 500
+
+
+def handle_post_property():
+    try:
+        token = request.headers.get('Authorization', "").replace("Bearer ", "")
+        user_data = verify_token(token)
+        if not user_data:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        user_id = user_data.get("uid")
+
+        title = request.form.get('title')
+        price = int(request.form.get('price', 0))
+        location = request.form.get('location')
+        bedrooms = int(request.form.get('bedrooms', 0))
+        bathrooms = int(request.form.get('bathrooms', 0))
+        property_type = request.form.get('property_type')
+        description = request.form.get('description', '')
+
+        image = request.files.get('image')
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'properties', filename)
+            image.save(image_path)
+            image_url = f"/images/properties/{filename}"
+        else:
+            image_url = "/images/properties/defaultprop.jpg"
+
+        new_property = Property(
+            title=title,
+            price=price,
+            location=location,
+            bedrooms=bedrooms,
+            bathrooms=bathrooms,
+            property_type=property_type,
+            description=description,
+            image_url=image_url,
+            created_by=user_id,
+            source='user'
+        )
+
+        db.session.add(new_property)
+        db.session.commit()
+
+        return jsonify({"message": "Property added successfully"}), 201
+
+    except Exception as e:
+        print("Error in add_property:", str(e))
+        return jsonify({"error": "Failed to add property"}), 500
+
 
 @bp.route('/api/favourites', methods=['GET'])
 @jwt_required()
@@ -256,5 +316,6 @@ def remove_favourite():
     except Exception as e:
         print(" ERROR in /api/favourites (DELETE):", str(e))
         return jsonify({"error": "Failed to remove property", "details": str(e)}), 500
+
 
 

@@ -1,6 +1,8 @@
 // src/components/PropertyList.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PropertyCard from './PropertyCard';
+import AddProperty from './AddProperty';
 import './PropertyList.css';
 
 const PropertyList = () => {
@@ -12,10 +14,10 @@ const PropertyList = () => {
     property_type: ''
   });
 
-  // Function to fetch properties with applied filters
+  const navigate = useNavigate();
+
   const fetchProperties = async () => {
     const params = new URLSearchParams();
-
     if (filters.location) params.append('location', filters.location);
     if (filters.min_price) params.append('min_price', filters.min_price);
     if (filters.max_price) params.append('max_price', filters.max_price);
@@ -31,10 +33,9 @@ const PropertyList = () => {
   };
 
   useEffect(() => {
-    fetchProperties(); // Fetch all properties on initial render
+    fetchProperties();
   }, []);
 
-  // Handle dropdown & input field changes
   const handleInputChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
@@ -44,7 +45,6 @@ const PropertyList = () => {
       <h1>Find Your Next Investment</h1>
 
       <div className="filter-bar">
-        {/* 📌 Updated Location Dropdown */}
         <select name="location" onChange={handleInputChange} value={filters.location}>
           <option value="">All Areas</option>
           <option value="North London">North London</option>
@@ -54,8 +54,8 @@ const PropertyList = () => {
           <option value="Central London">Central London</option>
         </select>
 
-        <input type="number" name="min_price" placeholder="Min Price (£)" value={filters.min_price} onChange={handleInputChange} min={0} step={5000} />
-        <input type="number" name="max_price" placeholder="Max Price (£)" value={filters.max_price} onChange={handleInputChange} min={0} step={5000} />
+        <input type="number" name="min_price" placeholder="Min Price (£)" value={filters.min_price} onChange={handleInputChange} min={50000} step={50000} />
+        <input type="number" name="max_price" placeholder="Max Price (£)" value={filters.max_price} onChange={handleInputChange} min={1000000} step={100000} />
 
         <select name="property_type" onChange={handleInputChange} value={filters.property_type}>
           <option value="">All Types</option>
@@ -66,6 +66,11 @@ const PropertyList = () => {
         </select>
 
         <button onClick={fetchProperties}>Search</button>
+
+        {/* 👉 Add Property Button */}
+        <button className="add-property-button" onClick={() => navigate('/add-property')}>
+          + Add Property
+        </button>
       </div>
 
       <div className="property-grid">

@@ -83,7 +83,7 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
 
     return (
         <div className="property-card">
-            <img src={property.image_url} alt={property.title} />
+            <img src={property.image_url || "/images/properties/defaultprop.jpg"} alt={property.title} />
             <h3>{property.title}</h3>
             <p>Price: £{property.price.toLocaleString()}</p>
             <p>Bedrooms: {property.bedrooms} | Bathrooms: {property.bathrooms}</p>
