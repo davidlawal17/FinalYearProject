@@ -7,6 +7,7 @@ from fconfig import verify_token
 from models import User, Property,Favorite
 from extensions import db  # Import db if you need to reference it directly
 from sqlalchemy import and_
+from sqlalchemy.exc import SQLAlchemyError
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
 from datetime import timedelta
 from utils import allowed_file
@@ -73,11 +74,15 @@ def login():
         user_data = login_user(email, password)  # Calls Firebase authentication
         firebase_uid = user_data.get("firebase_uid")
 
+        #  Check if user exists in PostgreSQL; if not, create one
         user = User.query.filter_by(firebase_uid=firebase_uid).first()
         if not user:
-            return jsonify({"error": "User not found in database"}), 404
+            print(f"User not found in DB. Creating new entry for {firebase_uid}")
+            user = User(firebase_uid=firebase_uid, email=email)
+            db.session.add(user)
+            db.session.commit()
 
-        # Generate JWT token for authentication
+        #  Generate JWT token for authentication
         access_token = create_access_token(identity=user.firebase_uid, expires_delta=timedelta(hours=1))
 
         return jsonify({
@@ -87,8 +92,9 @@ def login():
         }), 200
 
     except Exception as e:
-        print(" ERROR in /api/login:", str(e))  # Debugging
-        return jsonify({"error": str(e)}), 400  # Return specific error message
+        print("ERROR in /api/login:", str(e))  # Debugging
+        return jsonify({"error": str(e)}), 400
+
 
 @bp.route('/api/properties', methods=['GET', 'POST'])
 def properties_handler():
@@ -153,54 +159,110 @@ def handle_get_properties():
         return jsonify({"error": "Failed to fetch properties", "details": str(e)}), 500
 
 
+@jwt_required()  # Add this decorator
 def handle_post_property():
     try:
-        token = request.headers.get('Authorization', "").replace("Bearer ", "")
-        user_data = verify_token(token)
-        if not user_data:
-            return jsonify({"error": "Unauthorized"}), 401
+        current_user = get_jwt_identity()  # Now this will work
+        if not current_user:
+            print("ERROR: No user identity in JWT")
+            return jsonify({"error": "Unauthorized - invalid token"}), 401
 
-        user_id = user_data.get("uid")
+        print(f"DEBUG: Creating property for user: {current_user}")
 
-        title = request.form.get('title')
-        price = int(request.form.get('price', 0))
-        location = request.form.get('location')
-        bedrooms = int(request.form.get('bedrooms', 0))
-        bathrooms = int(request.form.get('bathrooms', 0))
-        property_type = request.form.get('property_type')
-        description = request.form.get('description', '')
+        # Validate required form data
+        required_fields = ['title', 'price', 'location', 'property_type']
+        missing_fields = [field for field in required_fields if not request.form.get(field)]
 
+        if missing_fields:
+            print(f"ERROR: Missing required fields: {missing_fields}")
+            return jsonify({
+                "error": "Missing required fields",
+                "missing": missing_fields
+            }), 400
+
+        # Parse form data
+        form_data = {
+            'title': request.form.get('title').strip(),
+            'price': int(request.form.get('price', 0)),
+            'location': request.form.get('location').strip(),
+            'bedrooms': int(request.form.get('bedrooms', 0)),
+            'bathrooms': int(request.form.get('bathrooms', 0)),
+            'property_type': request.form.get('property_type').strip(),
+            'description': request.form.get('description', '').strip(),
+        }
+
+        # Validate price is positive
+        if form_data['price'] <= 0:
+            print("ERROR: Invalid price value")
+            return jsonify({"error": "Price must be greater than 0"}), 400
+
+        # Handle image upload
         image = request.files.get('image')
         if image and allowed_file(image.filename):
             filename = secure_filename(image.filename)
-            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'properties', filename)
-            image.save(image_path)
-            image_url = f"/images/properties/{filename}"
+            try:
+                image_path = os.path.join(
+                    current_app.config['UPLOAD_FOLDER'],
+                    'properties',
+                    filename
+                )
+                image.save(image_path)
+                image_url = f"/images/properties/{filename}"
+                print(f"DEBUG: Image saved at {image_path}")
+            except Exception as e:
+                print(f"ERROR saving image: {str(e)}")
+                image_url = "/images/properties/defaultprop.jpg"
         else:
             image_url = "/images/properties/defaultprop.jpg"
+            print("DEBUG: Using default property image")
 
+        # Create new property
         new_property = Property(
-            title=title,
-            price=price,
-            location=location,
-            bedrooms=bedrooms,
-            bathrooms=bathrooms,
-            property_type=property_type,
-            description=description,
+            title=form_data['title'],
+            price=form_data['price'],
+            location=form_data['location'],
+            bedrooms=form_data['bedrooms'],
+            bathrooms=form_data['bathrooms'],
+            property_type=form_data['property_type'],
+            description=form_data['description'],
             image_url=image_url,
-            created_by=user_id,
+            created_by=current_user,
             source='user'
         )
 
         db.session.add(new_property)
         db.session.commit()
 
-        return jsonify({"message": "Property added successfully"}), 201
+        print(f"DEBUG: Property created successfully. ID: {new_property.id}")
+        print(f"DEBUG: Property created_by: {new_property.created_by}")
+
+        return jsonify({
+            "message": "Property added successfully",
+            "property_id": new_property.id,
+            "created_by": new_property.created_by
+        }), 201
+
+    except ValueError as e:
+        print(f"ERROR: Invalid numeric value - {str(e)}")
+        return jsonify({
+            "error": "Invalid numeric value",
+            "details": str(e)
+        }), 400
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        print(f"DATABASE ERROR: {str(e)}")
+        return jsonify({
+            "error": "Database operation failed",
+            "details": str(e)
+        }), 500
 
     except Exception as e:
-        print("Error in add_property:", str(e))
-        return jsonify({"error": "Failed to add property"}), 500
-
+        print(f"UNEXPECTED ERROR: {str(e)}")
+        return jsonify({
+            "error": "Failed to add property",
+            "details": str(e)
+        }), 500
 
 @bp.route('/api/favourites', methods=['GET'])
 @jwt_required()
@@ -317,5 +379,68 @@ def remove_favourite():
         print(" ERROR in /api/favourites (DELETE):", str(e))
         return jsonify({"error": "Failed to remove property", "details": str(e)}), 500
 
+@bp.route('/api/properties/<int:property_id>', methods=['DELETE'])
+@jwt_required()
+def delete_property(property_id):
+    try:
+        user_id = get_jwt_identity()  # This gives us the Firebase UID
+
+        property_to_delete = Property.query.get(property_id)
+
+        if not property_to_delete:
+            return jsonify({"error": "Property not found"}), 404
+
+        # Check if the current user is the creator
+        if property_to_delete.created_by != user_id:
+            return jsonify({"error": "You do not have permission to delete this property"}), 403
+
+        db.session.delete(property_to_delete)
+        db.session.commit()
+
+        return jsonify({"message": "Property deleted successfully"}), 200
+
+    except Exception as e:
+        print("Error in delete_property:", str(e))
+        return jsonify({"error": "Failed to delete property"}), 500
 
 
+@bp.route('/api/properties/<int:property_id>/check-ownership', methods=['GET'])
+@jwt_required()
+def check_ownership(property_id):
+    user_id = get_jwt_identity()
+    property = Property.query.get(property_id)
+
+    if not property:
+        return jsonify({"error": "Property not found"}), 404
+
+    return jsonify({
+        "property_created_by": property.created_by,
+        "current_user": user_id,
+        "is_owner": property.created_by == user_id
+    }), 200
+
+@bp.route('/api/properties/<int:property_id>', methods=['DELETE'])
+@jwt_required()
+def delete_property_by_id(property_id):
+    try:
+        user_id = get_jwt_identity()
+        property = Property.query.get(property_id)
+
+        if not property:
+            return jsonify({"error": "Property not found"}), 404
+
+        if property.created_by != user_id:
+            return jsonify({"error": "Unauthorized – You do not own this property"}), 403
+
+        db.session.delete(property)
+        db.session.commit()
+
+        return jsonify({"message": "Property deleted successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERROR deleting property: {str(e)}")
+        return jsonify({
+            "error": "Failed to delete property",
+            "details": str(e)
+        }), 500

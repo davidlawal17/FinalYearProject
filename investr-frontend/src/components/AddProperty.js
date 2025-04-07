@@ -107,7 +107,7 @@ const AddProperty = () => {
         <select name="price" value={formData.price} onChange={handleChange} required>
           <option value="">Select Price</option>
           {generatePriceOptions(50000, 1000000, 25000)}
-          {generatePriceOptions(1100000, 3000000, 100000)}
+          {generatePriceOptions(1100000, 10000000, 100000)}
         </select>
 
         <input type="number" name="bedrooms" placeholder="Bedrooms" value={formData.bedrooms} onChange={handleChange} required min="0" />

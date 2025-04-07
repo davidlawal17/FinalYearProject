@@ -1,102 +1,182 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './PropertyCard.css';
 
 const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false, onRemoveFavourite }) => {
-    const { user } = useAuth();
-    const isSaved = savedProperties.some(saved => saved.id === property.id);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const isSaved = savedProperties.some(saved => saved.id === property.id);
 
-    const handleSave = async () => {
-        if (!user) {
-            alert('Please log in to save properties.');
-            return;
+  const logOwnershipDetails = () => {
+    console.group('Property Ownership Details');
+    console.log('Property Data:', property);
+    console.log('Current User:', user);
+    console.log('Property created_by:', property.created_by);
+    console.log('User firebase_uid:', user?.firebase_uid);
+    console.log('Ownership Match:', property.created_by === user?.firebase_uid);
+    console.groupEnd();
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      alert('Please log in to save properties.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication token not found');
+
+      const response = await fetch('/api/favourites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ property_id: property.id })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save property');
+
+      alert('Saved to favourites!');
+    } catch (err) {
+      console.error('Save Error:', err);
+      setError(err.message);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!user) {
+      alert('Please log in to remove properties.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication token not found');
+
+      const response = await fetch('/api/favourites', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ property_id: property.id })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to remove property');
+
+      alert('Removed from favourites!');
+      onRemoveFavourite(property.id);
+    } catch (err) {
+      console.error('Remove Error:', err);
+      setError(err.message);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to permanently delete this property?");
+    if (!confirmDelete) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Authentication token not found');
+
+      const response = await fetch(`/api/properties/${property.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
+      });
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Authentication token not found. Please log in again.');
-            return;
-        }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to delete property');
 
-        try {
-            const response = await fetch('/api/favourites', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ property_id: property.id })
-            });
+      alert('Property deleted successfully!');
+      window.location.reload();
+    } catch (err) {
+      console.error('Delete Error:', err);
+      setError(err.message);
+      alert(`Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            const data = await response.json();
-            console.log("DEBUG: Save property API Response:", data);
+  useEffect(() => {
+    logOwnershipDetails();
+  }, []);
 
-            if (response.ok) {
-                alert('Saved to favourites!');
-            } else {
-                console.error(" Failed to save property:", data);
-                alert(`Failed to save property: ${data.error || "Unexpected error"}`);
-            }
-        } catch (error) {
-            console.error(' Error saving property:', error);
-            alert('An error occurred while saving the property.');
-        }
-    };
+  const isOwner = user?.firebase_uid && property.created_by === user.firebase_uid;
 
-    const handleRemove = async () => {
-        if (!user) {
-            alert('Please log in to remove properties.');
-            return;
-        }
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Authentication token not found. Please log in again.');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/favourites', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ property_id: property.id })
-            });
-
-            const data = await response.json();
-            console.log("DEBUG: Remove property API Response:", data);
-
-            if (response.ok) {
-                alert('Removed from favourites!');
-                onRemoveFavourite(property.id); //  Update UI after removal
-            } else {
-                console.error(" Failed to remove property:", data);
-                alert(`Failed to remove property: ${data.error || "Unexpected error"}`);
-            }
-        } catch (error) {
-            console.error(' Error removing property:', error);
-            alert('An error occurred while removing the property.');
-        }
-    };
-
-    return (
-        <div className="property-card">
-            <img src={property.image_url || "/images/properties/defaultprop.jpg"} alt={property.title} />
-            <h3>{property.title}</h3>
-            <p>Price: £{property.price.toLocaleString()}</p>
-            <p>Bedrooms: {property.bedrooms} | Bathrooms: {property.bathrooms}</p>
-            <p>Type: {property.property_type}</p>
-            <p>{property.description}</p>
-
-            {/* Show "Save Property" button only if it's not already saved */}
-            {!isSaved && user && !isFavouritePage && <button onClick={handleSave}>Save Property</button>}
-
-            {/* Show "Remove from Favourites" button only on the Favourites page */}
-            {isFavouritePage && <button onClick={handleRemove} className="remove-button">Remove from Favourites</button>}
+  return (
+    <div className="property-card">
+      <img
+        src={property.image_url || "/images/properties/defaultprop.jpg"}
+        alt={property.title}
+        className="property-image"
+      />
+      <div className="property-details">
+        <h3>{property.title}</h3>
+        <p className="property-price">£{property.price.toLocaleString()}</p>
+        <div className="property-features">
+          <span>🏠 {property.bedrooms} bed</span>
+          <span>🚿 {property.bathrooms} bath</span>
+          <span>📐 {property.property_type}</span>
         </div>
-    );
+        <p className="property-location">📍 {property.location}</p>
+        <p className="property-description">{property.description}</p>
+      </div>
+
+      <div className="property-actions">
+        {!isSaved && user && !isFavouritePage && (
+          <button onClick={handleSave} disabled={isLoading} className="save-button">
+            {isLoading ? 'Saving...' : '❤️ Save Property'}
+          </button>
+        )}
+        {isFavouritePage && (
+          <button onClick={handleRemove} disabled={isLoading} className="remove-button">
+            {isLoading ? 'Removing...' : '🗑️ Remove'}
+          </button>
+        )}
+        {isOwner && (
+          <button onClick={handleDelete} disabled={isLoading} className="delete-button">
+            {isLoading ? 'Deleting...' : '❌ Delete Property'}
+          </button>
+        )}
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {/*process.env.NODE_ENV === 'development' && (
+        <div className="debug-info">
+          <p><strong>Debug Info:</strong></p>
+          <p>Property ID: {property.id}</p>
+          <p>Created By: {property.created_by || 'null'}</p>
+          <p>Current User: {user?.firebase_uid || 'Not logged in'}</p>
+          <p>Ownership: {isOwner ? ' You own this' : ' Not yours'}</p>
+        </div>
+      )*/}
+    </div>
+  );
 };
 
 export default PropertyCard;

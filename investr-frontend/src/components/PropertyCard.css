@@ -47,3 +47,17 @@
 .property-card button:hover {
   background-color: #003B5C;
 }
+.delete-button {
+  background-color: #c0392b;
+  color: white;
+  padding: 10px;
+  margin-top: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #a93226;
+}

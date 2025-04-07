@@ -22,7 +22,7 @@ class Property(db.Model):
     property_type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     image_url = db.Column(db.String(255))
-    created_by = db.Column(db.String, db.ForeignKey('user.id'), nullable=True)
+    created_by = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
     source = db.Column(db.String(20), default='user')
 
