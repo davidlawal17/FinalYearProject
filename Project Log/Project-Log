@@ -62,3 +62,10 @@ Another issue i ran into was being logged out after uploading an image, and this
 After fixing these issues I refactored the backend to use current_app, instead of directly acessing app to vaoid import erros.
 
 Since we can now search for, view and add properties it only makes sense for me to add a way to remove propeties. I will try and implement this now.
+
+update-
+I have managed to implement a way for the users to delete a property. The way it works is that a user can only delete a property which belongs to them.
+This was challenging as i had to ensure proper ownership validation. I had to compare thr firebase_uid of the logged in user against the created_by field of each property.
+Initially the delet option wasn't showing. I spent a lot of time troubleshooting this error, trying to fix it. After a while i realised it was because of foregin key constraint issuses in the database. The created_by field referenced a user that didn't exists in the user table,
+which caused errors.
+To resolve this I updated the foreign key constrain the database using an SQL script.
