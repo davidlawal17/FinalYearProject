@@ -69,3 +69,7 @@ This was challenging as i had to ensure proper ownership validation. I had to co
 Initially the delet option wasn't showing. I spent a lot of time troubleshooting this error, trying to fix it. After a while i realised it was because of foregin key constraint issuses in the database. The created_by field referenced a user that didn't exists in the user table,
 which caused errors.
 To resolve this I updated the foreign key constrain the database using an SQL script.
+
+Monday 7th April - Sunday 13th April
+I have now spent a lot of time on the property listings feature, I am happy with it. It's now time to move on to my advance features. These two features which are the recommendation and simulation feature will be the most complex.
+I will start with the recommendation feature.
