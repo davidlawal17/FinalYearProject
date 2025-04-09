@@ -508,7 +508,15 @@ def recommend():
         return jsonify({
             "recommendation": "Buy" if prediction == 1 else "Avoid",
             "confidence": round(confidence, 1),
+            "roi": round(
+                features["estimated_rent"] * 12 / features["price"] * 100 + features["expected_growth_rate"] * 100, 2),
+            "estimated_rent": round(features["estimated_rent"]),
+            "growth_rate": round(features["expected_growth_rate"] * 100, 2),
+            "price_projection": [
+                round(features["price"] * ((1 + features["expected_growth_rate"]) ** i)) for i in range(6)
+            ]
         })
+
 
     except Exception as e:
         print("Prediction error:", str(e))

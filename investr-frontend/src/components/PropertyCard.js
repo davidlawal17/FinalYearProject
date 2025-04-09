@@ -7,6 +7,7 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
+  const [investmentDetails, setInvestmentDetails] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isSaved = savedProperties.some(saved => saved.id === property.id);
@@ -25,7 +26,6 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Authentication token not found');
       const response = await fetch('/api/favourites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -49,7 +49,6 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Authentication token not found');
       const response = await fetch('/api/favourites', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -75,7 +74,6 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Authentication token not found');
       const response = await fetch(`/api/properties/${property.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -97,6 +95,7 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     setIsModalOpen(true);
     setIsLoading(true);
     setRecommendation(null);
+    setInvestmentDetails(null);
 
     const body = {
       title: property.title,
@@ -119,12 +118,24 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
       setRecommendation(result.recommendation
         ? `${result.recommendation} (${result.confidence}% confidence)`
         : "Unable to generate recommendation.");
+
+      setInvestmentDetails({
+        roi: result.roi,
+        estimated_rent: result.estimated_rent,
+        growth_rate: result.growth_rate,
+        price_projection: result.price_projection
+      });
+
     } catch (err) {
       console.error("Recommendation Error:", err);
       setRecommendation("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
@@ -175,8 +186,15 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
             ) : (
               <>
                 <h2>💡 Investment Advice</h2>
-                <p>{recommendation}</p>
-                <button onClick={() => setIsModalOpen(false)}>Close</button>
+                <p><strong>Recommendation:</strong> {recommendation}</p>
+                {investmentDetails && (
+                  <>
+                    <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails.estimated_rent}</p>
+                    <p><strong>Growth Rate:</strong> {investmentDetails.growth_rate}%</p>
+                    <p><strong>ROI:</strong> {investmentDetails.roi}%</p>
+                  </>
+                )}
+                <button onClick={closeModal}>Close</button>
               </>
             )}
           </div>

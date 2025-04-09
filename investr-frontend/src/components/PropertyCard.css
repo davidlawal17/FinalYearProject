@@ -9,13 +9,11 @@
   cursor: pointer;
 }
 
-/* Hover effect */
 .property-card:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Enlarged effect when clicked */
 .property-card:active {
   transform: scale(1.1);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
@@ -47,6 +45,7 @@
 .property-card button:hover {
   background-color: #003B5C;
 }
+
 .delete-button {
   background-color: #c0392b;
   color: white;
@@ -62,81 +61,27 @@
   background-color: #a93226;
 }
 
-.recommendation-button {
-  margin-top: 10px;
-  width: 100%;
-  background-color: #0077b6; /* blue but distinct from other buttons */
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-}
-
-.recommendation-button:hover {
-  background-color: #005f87;
-}
-
-.recommendation-result {
-  margin-top: 10px;
-  font-weight: bold;
-  background-color: #003b5c;
-  padding: 10px;
-  border-radius: 4px;
-  color: #ffffff;
-}
-
-/* Spinner */
-.spinner {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #0077b6;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 0.8s linear infinite;
-  margin: 2rem auto;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Modal overlay */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 31, 63, 0.8);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 1000;
+  align-items: center;
+  z-index: 999;
 }
 
-/* Modal box */
 .modal {
-  background: #002744;
-  color: #eaf2f8;
-  max-width: 400px;
-  width: 80%;
-  padding: 20px;
-  border-radius: 10px;
+  background-color: rgba(0, 31, 63, 0.95);
+  padding: 1rem;
+  border-radius: 8px;
+  color: #EAEDED;
+  max-width: 600px;
+  width: 100%;
+  margin: auto;
   text-align: center;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-}
-.modal h2 {
-  color: #7FB3D5;
-}
-.modal button {
-  margin-top: 1rem;
-  background-color: #0077b6;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-}
-.modal button:hover {
-  background-color: #005f87;
+  min-height: 300px;
 }
