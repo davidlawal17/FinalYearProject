@@ -11,6 +11,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
 from datetime import timedelta
 from utils import allowed_file
+import pandas as pd
+from recomendation import predict_recommendation, FEATURES, model
 import os
 
 UPLOAD_FOLDER = 'investr-frontend/public/images/properties'
@@ -444,3 +446,71 @@ def delete_property_by_id(property_id):
             "error": "Failed to delete property",
             "details": str(e)
         }), 500
+
+
+REGION_MAP = {
+    'N': 'North', 'NW': 'North',
+    'E': 'East',
+    'SE': 'South', 'SW': 'South', 'S': 'South',
+    'W': 'West',
+    'WC': 'Central', 'EC': 'Central'
+}
+
+def extract_region_from_title(title):
+    import re
+    match = re.search(r'([A-Z]{1,2})\d{1,2}[A-Z]?', title.strip().split(',')[-1].strip())
+    prefix = match.group(1) if match else 'UNK'
+    return REGION_MAP.get(prefix, 'Other')
+
+@bp.route("/api/recommend", methods=["POST"])
+def recommend():
+    data = request.get_json()
+
+    try:
+        price = data["price"]
+        bedrooms = data["bedrooms"]
+        bathrooms = data["bathrooms"]
+        size = data["sizeSqFeetMax"]
+        title = data.get("title", "")  # get the title from frontend
+
+        region = extract_region_from_title(title)
+
+        # One-hot encode the region based on model training
+        regions = ["North", "South", "East", "West", "Central", "Other"]
+        region_encoding = {f"region_{r}": int(r == region) for r in regions}
+
+        # Property type encoding
+        pt = data.get("property_type", "Other").replace("-", "_")
+        pt_categories = ['Flat', 'House', 'Detached', 'Semi_Detached', 'Terraced', 'Other']
+        pt_encoding = {f"propertyType_{cat}": int(cat == pt) for cat in pt_categories}
+
+        # Compose feature dictionary
+        features = {
+            "price": price,
+            "bedrooms": bedrooms,
+            "bathrooms": bathrooms,
+            "sizeSqFeetMax": size,
+            "price_per_bedroom": price / max(bedrooms, 1),
+            "price_per_sqft": price / max(size, 1),
+            "estimated_rent": price * 0.0045,
+            "expected_growth_rate": 0.045,
+            **region_encoding,
+            **pt_encoding
+        }
+
+        # Filter to only include trained model features
+        ordered_data = {feature: features.get(feature, 0) for feature in model.feature_names_in_}
+        input_df = pd.DataFrame([ordered_data])
+
+        prediction = model.predict(input_df)[0]
+        confidence = model.predict_proba(input_df)[0][prediction] * 100
+
+        return jsonify({
+            "recommendation": "Buy" if prediction == 1 else "Avoid",
+            "confidence": round(confidence, 1),
+        })
+
+    except Exception as e:
+        print("Prediction error:", str(e))
+        return jsonify({"error": "Unable to process recommendation"}), 500
+

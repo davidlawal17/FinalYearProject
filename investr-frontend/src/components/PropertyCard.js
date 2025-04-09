@@ -6,43 +6,33 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const isSaved = savedProperties.some(saved => saved.id === property.id);
+  const [recommendation, setRecommendation] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const logOwnershipDetails = () => {
+  const isSaved = savedProperties.some(saved => saved.id === property.id);
+  const isOwner = user?.firebase_uid && property.created_by === user.firebase_uid;
+
+  useEffect(() => {
     console.group('Property Ownership Details');
     console.log('Property Data:', property);
-    console.log('Current User:', user);
-    console.log('Property created_by:', property.created_by);
-    console.log('User firebase_uid:', user?.firebase_uid);
     console.log('Ownership Match:', property.created_by === user?.firebase_uid);
     console.groupEnd();
-  };
+  }, [property, user?.firebase_uid]);
 
   const handleSave = async () => {
-    if (!user) {
-      alert('Please log in to save properties.');
-      return;
-    }
-
+    if (!user) return alert('Please log in to save properties.');
     setIsLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication token not found');
-
       const response = await fetch('/api/favourites', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ property_id: property.id })
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to save property');
-
       alert('Saved to favourites!');
     } catch (err) {
       console.error('Save Error:', err);
@@ -54,30 +44,19 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
   };
 
   const handleRemove = async () => {
-    if (!user) {
-      alert('Please log in to remove properties.');
-      return;
-    }
-
+    if (!user) return alert('Please log in to remove properties.');
     setIsLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication token not found');
-
       const response = await fetch('/api/favourites', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ property_id: property.id })
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to remove property');
-
       alert('Removed from favourites!');
       onRemoveFavourite(property.id);
     } catch (err) {
@@ -92,24 +71,17 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
   const handleDelete = async () => {
     const confirmDelete = window.confirm("Are you sure you want to permanently delete this property?");
     if (!confirmDelete) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication token not found');
-
       const response = await fetch(`/api/properties/${property.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to delete property');
-
       alert('Property deleted successfully!');
       window.location.reload();
     } catch (err) {
@@ -121,11 +93,39 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     }
   };
 
-  useEffect(() => {
-    logOwnershipDetails();
-  }, []);
+  const handleInvestmentAdvice = async () => {
+    setIsModalOpen(true);
+    setIsLoading(true);
+    setRecommendation(null);
 
-  const isOwner = user?.firebase_uid && property.created_by === user.firebase_uid;
+    const body = {
+      title: property.title,
+      price: property.price,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      sizeSqFeetMax: property.sizeSqFeetMax || 600,
+      property_type: property.property_type || "Other"
+    };
+
+    try {
+      const response = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const result = await response.json();
+
+      setRecommendation(result.recommendation
+        ? `${result.recommendation} (${result.confidence}% confidence)`
+        : "Unable to generate recommendation.");
+    } catch (err) {
+      console.error("Recommendation Error:", err);
+      setRecommendation("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="property-card">
@@ -136,7 +136,7 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
       />
       <div className="property-details">
         <h3>{property.title}</h3>
-        <p className="property-price">£{property.price.toLocaleString()}</p>
+        <p className="property-price">£{property.price?.toLocaleString() || 'N/A'}</p>
         <div className="property-features">
           <span>🏠 {property.bedrooms} bed</span>
           <span>🚿 {property.bathrooms} bath</span>
@@ -162,19 +162,28 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
             {isLoading ? 'Deleting...' : '❌ Delete Property'}
           </button>
         )}
+        <button onClick={handleInvestmentAdvice} className="recommendation-button">
+          💡 Get Investment Advice
+        </button>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-
-      {/*process.env.NODE_ENV === 'development' && (
-        <div className="debug-info">
-          <p><strong>Debug Info:</strong></p>
-          <p>Property ID: {property.id}</p>
-          <p>Created By: {property.created_by || 'null'}</p>
-          <p>Current User: {user?.firebase_uid || 'Not logged in'}</p>
-          <p>Ownership: {isOwner ? ' You own this' : ' Not yours'}</p>
+      {isModalOpen && (
+        <div className="overlay">
+          <div className="modal">
+            {isLoading ? (
+              <div className="spinner"></div>
+            ) : (
+              <>
+                <h2>💡 Investment Advice</h2>
+                <p>{recommendation}</p>
+                <button onClick={() => setIsModalOpen(false)}>Close</button>
+              </>
+            )}
+          </div>
         </div>
-      )*/}
+      )}
+
+      {error && <div className="error-message">{error}</div>}
     </div>
   );
 };
