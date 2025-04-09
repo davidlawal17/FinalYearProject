@@ -73,3 +73,9 @@ To resolve this I updated the foreign key constrain the database using an SQL sc
 Monday 7th April - Sunday 13th April
 I have now spent a lot of time on the property listings feature, I am happy with it. It's now time to move on to my advance features. These two features which are the recommendation and simulation feature will be the most complex.
 I will start with the recommendation feature.
+
+-update
+I have successfully integrated a machine learning model for the investment recommendation feature of my real estate assistant platform. The model is a Gradient Boosting Classifier trained on a cleaned dataset of London property listings. 
+
+However, during testing, I noticed that the model predicts “Buy” for nearly every property, often with 100% confidence. This is a clear sign of overfitting. This means that the model is not realistic, therefore I am to improve the reliabily and accuracy of the model.
+
