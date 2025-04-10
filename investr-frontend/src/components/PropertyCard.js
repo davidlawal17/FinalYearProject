@@ -1,6 +1,74 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import './PropertyCard.css';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+
+const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmentDetails }) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="overlay">
+      <div className="modal">
+        {isLoading ? (
+          <div className="spinner"></div>
+        ) : (
+          <>
+            <h2>💡 Investment Advice</h2>
+            <p><strong>Recommendation:</strong> {recommendation}</p>
+            {investmentDetails && (
+              <>
+                <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails.estimated_rent}</p>
+                <p><strong>Growth Rate:</strong> {investmentDetails.growth_rate}%</p>
+                <p><strong>ROI:</strong> {investmentDetails.roi}%</p>
+
+                {Array.isArray(investmentDetails.price_projection) && (
+                  <div style={{ width: '100%' }}>
+                    <Line
+                      data={{
+                        labels: investmentDetails.price_projection.map((_, i) => `Year ${i}`),
+                        datasets: [{
+                          label: 'Projected Value (£)',
+                          data: investmentDetails.price_projection,
+                          borderColor: '#7FB3D5',
+                          tension: 0.3
+                        }]
+                      }}
+                      options={{
+                        responsive: true,
+                        plugins: {
+                          legend: { display: true },
+                          tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                          x: { ticks: { color: '#EAEDED' } },
+                          y: { ticks: { color: '#EAEDED' } }
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+            <button onClick={onClose}>Close</button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+};
 
 const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false, onRemoveFavourite }) => {
   const { user } = useAuth();
@@ -134,10 +202,6 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
     }
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
   return (
     <div className="property-card">
       <img
@@ -178,28 +242,13 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
         </button>
       </div>
 
-      {isModalOpen && (
-        <div className="overlay">
-          <div className="modal">
-            {isLoading ? (
-              <div className="spinner"></div>
-            ) : (
-              <>
-                <h2>💡 Investment Advice</h2>
-                <p><strong>Recommendation:</strong> {recommendation}</p>
-                {investmentDetails && (
-                  <>
-                    <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails.estimated_rent}</p>
-                    <p><strong>Growth Rate:</strong> {investmentDetails.growth_rate}%</p>
-                    <p><strong>ROI:</strong> {investmentDetails.roi}%</p>
-                  </>
-                )}
-                <button onClick={closeModal}>Close</button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <InvestmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        isLoading={isLoading}
+        recommendation={recommendation}
+        investmentDetails={investmentDetails}
+      />
 
       {error && <div className="error-message">{error}</div>}
     </div>

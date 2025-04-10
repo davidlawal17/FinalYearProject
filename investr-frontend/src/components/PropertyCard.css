@@ -1,3 +1,4 @@
+/* --- Property Card --- */
 .property-card {
   background-color: rgba(0, 31, 63, 0.85);
   padding: 1rem;
@@ -12,6 +13,12 @@
 .property-card:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.disable-card-hover .property-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  cursor: default !important;
 }
 
 .property-card:active {
@@ -49,39 +56,77 @@
 .delete-button {
   background-color: #c0392b;
   color: white;
-  padding: 10px;
   margin-top: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 .delete-button:hover {
   background-color: #a93226;
 }
 
+/* --- Modal Overlay via React Portal --- */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 999;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
 }
 
+/* --- Modal Box --- */
 .modal {
-  background-color: rgba(0, 31, 63, 0.95);
-  padding: 1rem;
-  border-radius: 8px;
+  background-color: #001f3f;
+  padding: 1.5rem;
+  border-radius: 10px;
+  max-width: 550px;
+  width: 90%;
   color: #EAEDED;
-  max-width: 600px;
-  width: 100%;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  animation: slideIn 0.25s ease-out forwards;
+  transform: translateY(10px);
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- Spinner --- */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ccc;
+  border-top: 5px solid #7FB3D5;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
   margin: auto;
-  text-align: center;
-  min-height: 300px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Error Message --- */
+.error-message {
+  color: #ff4d4f;
+  font-weight: bold;
+  margin-top: 0.5rem;
 }
