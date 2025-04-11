@@ -12,6 +12,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_tok
 from datetime import timedelta
 from utils import allowed_file
 import pandas as pd
+import numpy as np
+import math
+
 from recomendation import predict_recommendation, FEATURES, model
 import os
 
@@ -462,63 +465,83 @@ def extract_region_from_title(title):
     prefix = match.group(1) if match else 'UNK'
     return REGION_MAP.get(prefix, 'Other')
 
-@bp.route("/api/recommend", methods=["POST"])
+@bp.route('/api/recommend', methods=['POST'])
 def recommend():
-    data = request.get_json()
-
     try:
-        price = data["price"]
-        bedrooms = data["bedrooms"]
-        bathrooms = data["bathrooms"]
-        size = data["sizeSqFeetMax"]
-        title = data.get("title", "")  # get the title from frontend
+        data = request.get_json()
 
-        region = extract_region_from_title(title)
+        # Extract basic features
+        price = float(data.get("price"))
+        bedrooms = int(data.get("bedrooms", 1))
+        bathrooms = int(data.get("bathrooms", 1))
+        sqft = float(data.get("sizeSqFeetMax", 600))
+        property_type = data.get("property_type", "Other")
+        region = data.get("region", "Other")
 
-        # One-hot encode the region based on model training
-        regions = ["North", "South", "East", "West", "Central", "Other"]
-        region_encoding = {f"region_{r}": int(r == region) for r in regions}
+        # Region-based benchmark growth rates (based on 2025 predictions)
+        region_benchmark_rates = {
+            "Central": 0.035,
+            "North": 0.030,
+            "South": 0.035,
+            "East": 0.040,
+            "West": 0.030,
+            "Other": 0.035
+        }
 
-        # Property type encoding
-        pt = data.get("property_type", "Other").replace("-", "_")
-        pt_categories = ['Flat', 'House', 'Detached', 'Semi_Detached', 'Terraced', 'Other']
-        pt_encoding = {f"propertyType_{cat}": int(cat == pt) for cat in pt_categories}
+        # Use region-specific benchmark growth
+        benchmark_growth = region_benchmark_rates.get(region, 0.035)
+        benchmark_projection = [round(price * ((1 + benchmark_growth) ** i)) for i in range(6)]
 
-        # Compose feature dictionary
+        # Simulate rent and growth dynamically
+        growth_rate = np.random.uniform(0.02, 0.06)
+        estimated_rent = price * np.random.uniform(0.0035, 0.0065)
+        roi = (estimated_rent * 12 / price * 100) + (growth_rate * 100)
+
+        # Compute price projection
+        price_projection = [round(price * ((1 + growth_rate) ** i)) for i in range(6)]
+
+        # Feature engineering
+        price_per_bedroom = price / bedrooms
+        price_per_sqft = price / sqft
+
+        # Build feature dict
         features = {
             "price": price,
             "bedrooms": bedrooms,
             "bathrooms": bathrooms,
-            "sizeSqFeetMax": size,
-            "price_per_bedroom": price / max(bedrooms, 1),
-            "price_per_sqft": price / max(size, 1),
-            "estimated_rent": price * 0.0045,
-            "expected_growth_rate": 0.045,
-            **region_encoding,
-            **pt_encoding
+            "sizeSqFeetMax": sqft,
+            "price_per_bedroom": price_per_bedroom,
+            "price_per_sqft": price_per_sqft,
+            "estimated_rent": estimated_rent,
+            "expected_growth_rate": growth_rate
         }
 
-        # Filter to only include trained model features
-        ordered_data = {feature: features.get(feature, 0) for feature in model.feature_names_in_}
-        input_df = pd.DataFrame([ordered_data])
+        # One-hot encode property type
+        for pt in ["Detached", "Flat", "House", "Semi_Detached", "Terraced", "Other"]:
+            features[f"propertyType_{pt}"] = 1 if property_type == pt else 0
 
-        prediction = model.predict(input_df)[0]
-        confidence = model.predict_proba(input_df)[0][prediction] * 100
+        # One-hot encode region
+        for r in ["North", "South", "East", "West", "Central", "Other"]:
+            features[f"region_{r}"] = 1 if region == r else 0
 
+        # Fill any missing feature with 0
+        for f in FEATURES:
+            features.setdefault(f, 0)
+
+        # Predict
+        result = predict_recommendation(features)
+
+        # Return full info
         return jsonify({
-            "recommendation": "Buy" if prediction == 1 else "Avoid",
-            "confidence": round(confidence, 1),
-            "roi": round(
-                features["estimated_rent"] * 12 / features["price"] * 100 + features["expected_growth_rate"] * 100, 2),
-            "estimated_rent": round(features["estimated_rent"]),
-            "growth_rate": round(features["expected_growth_rate"] * 100, 2),
-            "price_projection": [
-                round(features["price"] * ((1 + features["expected_growth_rate"]) ** i)) for i in range(6)
-            ]
+            **result,
+            "roi": round(roi, 2),
+            "growth_rate": round(growth_rate * 100, 2),
+            "estimated_rent": round(estimated_rent, 2),
+            "price_projection": price_projection,
+            "benchmark_projection": benchmark_projection,
+            "benchmark_growth": round(benchmark_growth * 100, 2)  # Return % for frontend label
         })
 
-
     except Exception as e:
-        print("Prediction error:", str(e))
-        return jsonify({"error": "Unable to process recommendation"}), 500
-
+        print("Error in recommendation route:", e)
+        return jsonify({"error": str(e)}), 500

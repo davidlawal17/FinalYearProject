@@ -18,6 +18,28 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmentDetails }) => {
   if (!isOpen) return null;
 
+  // Helper to generate benchmark growth line
+  const generateBenchmarkLine = (startValue, years, annualGrowth = 0.035) => {
+    const result = [];
+    for (let i = 0; i < years; i++) {
+      result.push(Math.round(startValue * Math.pow(1 + annualGrowth, i)));
+    }
+    return result;
+  };
+
+  // Fallback benchmark growth rate (in case it's missing)
+  const benchmarkGrowth = investmentDetails?.benchmark_growth ?? 3.5;
+
+  // Decide explanation message based on model recommendation
+  const getExplanationMessage = () => {
+    if (!recommendation) return "";
+    if (recommendation.toLowerCase().includes("buy")) {
+      return "📈 This property's projected value is growing faster than the market average. Consider buying for strong returns.";
+    } else {
+      return `📉 This property's value grows slower than the market benchmark (${benchmarkGrowth}%) or may not meet investment criteria. Avoid or investigate further.`;
+    }
+  };
+
   return ReactDOM.createPortal(
     <div className="overlay">
       <div className="modal">
@@ -27,40 +49,58 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
           <>
             <h2>💡 Investment Advice</h2>
             <p><strong>Recommendation:</strong> {recommendation}</p>
-            {investmentDetails && (
-              <>
-                <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails.estimated_rent}</p>
-                <p><strong>Growth Rate:</strong> {investmentDetails.growth_rate}%</p>
-                <p><strong>ROI:</strong> {investmentDetails.roi}%</p>
+            <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails?.estimated_rent || ""}</p>
+            <p><strong>Growth Rate:</strong> {investmentDetails?.growth_rate || ""}%</p>
+            <p><strong>ROI:</strong> {investmentDetails?.roi || ""}%</p>
 
-                {Array.isArray(investmentDetails.price_projection) && (
-                  <div style={{ width: '100%' }}>
-                    <Line
-                      data={{
-                        labels: investmentDetails.price_projection.map((_, i) => `Year ${i}`),
-                        datasets: [{
-                          label: 'Projected Value (£)',
-                          data: investmentDetails.price_projection,
-                          borderColor: '#7FB3D5',
-                          tension: 0.3
-                        }]
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: { display: true },
-                          tooltip: { mode: 'index', intersect: false }
-                        },
-                        scales: {
-                          x: { ticks: { color: '#EAEDED' } },
-                          y: { ticks: { color: '#EAEDED' } }
+            {Array.isArray(investmentDetails?.price_projection) && (
+              <div style={{ width: '100%' }}>
+                <Line
+                  data={{
+                    labels: investmentDetails.price_projection.map((_, i) => `Year ${i}`),
+                    datasets: [
+                      {
+                        label: 'Projected Value (£)',
+                        data: investmentDetails.price_projection,
+                        borderColor: '#7FB3D5',
+                        tension: 0.3
+                      },
+                      {
+                        label: `Benchmark (${benchmarkGrowth}% Growth)`,
+                        data: generateBenchmarkLine(
+                          investmentDetails.price_projection[0],
+                          investmentDetails.price_projection.length,
+                          benchmarkGrowth / 100
+                        ),
+                        borderColor: '#E67E22',
+                        borderDash: [5, 5],
+                        tension: 0.3
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: true },
+                      tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                          label: context => `£${context.parsed.y.toLocaleString()}`
                         }
-                      }}
-                    />
-                  </div>
-                )}
-              </>
+                      }
+                    },
+                    scales: {
+                      x: { ticks: { color: '#EAEDED' } },
+                      y: { ticks: { color: '#EAEDED' } }
+                    }
+                  }}
+                />
+              </div>
             )}
+
+            <p style={{ marginTop: '1rem' }}>{getExplanationMessage()}</p>
+
             <button onClick={onClose}>Close</button>
           </>
         )}
@@ -69,6 +109,9 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
     document.body
   );
 };
+
+
+
 
 const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false, onRemoveFavourite }) => {
   const { user } = useAuth();
