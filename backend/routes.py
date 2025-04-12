@@ -465,12 +465,14 @@ def extract_region_from_title(title):
     prefix = match.group(1) if match else 'UNK'
     return REGION_MAP.get(prefix, 'Other')
 
+
 @bp.route('/api/recommend', methods=['POST'])
 def recommend():
     try:
+
         data = request.get_json()
 
-        # Extract raw inputs
+        # Extract inputs
         price = float(data.get("price"))
         bedrooms = int(data.get("bedrooms", 1))
         bathrooms = int(data.get("bathrooms", 1))
@@ -478,38 +480,33 @@ def recommend():
         property_type = data.get("property_type", "Other")
         region = data.get("region", "Other")
 
-        # Derived features
+        # Compute features
         price_per_bedroom = price / bedrooms
         price_per_sqft = price / sqft
         estimated_rent = price * np.random.uniform(0.0035, 0.0065)
         rent_to_price_ratio = (estimated_rent * 12) / price * 100
         bedrooms_per_100k = bedrooms / (price / 100_000)
 
-        # Region score
-        region_score_map = {
-            "Central": 0.90,
-            "East": 0.85,
-            "South": 0.75,
-            "West": 0.65,
-            "North": 0.60,
-            "Other": 0.50
-        }
-        region_score = region_score_map.get(region, 0.50)
-
-        # Simulated growth and ROI
+        # Project growth
         growth_rate = np.random.uniform(0.02, 0.06)
         roi = rent_to_price_ratio + (growth_rate * 100)
 
-        # 5-year projections
+        # Build price projection
         price_projection = [round(price * ((1 + growth_rate) ** i)) for i in range(6)]
-        benchmark_growth_map = {
-            "Central": 0.035, "North": 0.030, "South": 0.035,
-            "East": 0.040, "West": 0.030, "Other": 0.035
+
+        # Region-specific benchmark
+        region_benchmark_rates = {
+            "Central": 0.035,
+            "North": 0.030,
+            "South": 0.035,
+            "East": 0.040,
+            "West": 0.030,
+            "Other": 0.035
         }
-        benchmark_growth = benchmark_growth_map.get(region, 0.035)
+        benchmark_growth = region_benchmark_rates.get(region, 0.035)
         benchmark_projection = [round(price * ((1 + benchmark_growth) ** i)) for i in range(6)]
 
-        # Build feature dict (match model exactly)
+        # Build feature dictionary
         features = {
             "price": price,
             "bedrooms": bedrooms,
@@ -520,25 +517,42 @@ def recommend():
             "estimated_rent": estimated_rent,
             "rent_to_price_ratio": rent_to_price_ratio,
             "bedrooms_per_100k": bedrooms_per_100k,
-            "region_score": region_score
+            "region_score": benchmark_growth * 100  # Use as a proxy for region investment quality
         }
 
-        # One-hot encoding for region
-        for r in ["Central", "East", "North", "Other", "South", "West"]:
-            features[f"region_{r}"] = 1 if region == r else 0
-
-        # One-hot encoding for property type
-        for pt in ["Detached", "Flat", "House", "Other", "Semi_Detached", "Terraced"]:
+        # One-hot encode property type
+        for pt in ["Detached", "Flat", "House", "Semi_Detached", "Terraced", "Other"]:
             features[f"propertyType_{pt}"] = 1 if property_type == pt else 0
 
-        # Ensure missing features are included as 0
+        # One-hot encode region
+        for r in ["North", "South", "East", "West", "Central", "Other"]:
+            features[f"region_{r}"] = 1 if region == r else 0
 
+        # Ensure all features are present
         for f in FEATURES:
             features.setdefault(f, 0)
 
-        # Predict
+        # Get model prediction
         result = predict_recommendation(features)
+        recommendation = result["recommendation"]
 
+        # Decide whether to show the growth chart
+        show_growth_chart = (
+            (recommendation == "Buy" and growth_rate >= benchmark_growth) or
+            (recommendation == "Avoid" and growth_rate < benchmark_growth)
+        )
+
+        # Explanation if graph contradicts model
+        if not show_growth_chart:
+            explanation = (
+                f"📊 Although the growth trend appears {'strong' if growth_rate >= benchmark_growth else 'weak'}, "
+                f"the model recommends to {recommendation.lower()} based on deeper metrics such as ROI "
+                f"({round(roi, 2)}%) and rent-to-price ratio."
+            )
+        else:
+            explanation = " The recommendation aligns with the projected growth trend."
+
+        # Return full response
         return jsonify({
             **result,
             "roi": round(roi, 2),
@@ -546,9 +560,16 @@ def recommend():
             "estimated_rent": round(estimated_rent, 2),
             "price_projection": price_projection,
             "benchmark_projection": benchmark_projection,
-            "benchmark_growth": round(benchmark_growth * 100, 2)
+            "benchmark_growth": round(benchmark_growth * 100, 2),
+            "show_growth_chart": show_growth_chart,
+            "explanation": explanation
         })
 
     except Exception as e:
         print("Error in recommendation route:", e)
         return jsonify({"error": str(e)}), 500
+
+    print(f"RECOMMENDATION: {recommendation}")
+    print(f"Growth Rate: {growth_rate:.4f} vs Benchmark: {benchmark_growth:.4f}")
+    print(f"Show Growth Chart: {show_growth_chart}")
+

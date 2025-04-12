@@ -8,17 +8,19 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Tooltip,
   Legend
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
 const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmentDetails }) => {
   if (!isOpen) return null;
 
-  // Helper to generate benchmark growth line
+  const benchmarkGrowth = investmentDetails?.benchmark_growth ?? 3.5;
+
   const generateBenchmarkLine = (startValue, years, annualGrowth = 0.035) => {
     const result = [];
     for (let i = 0; i < years; i++) {
@@ -27,16 +29,16 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
     return result;
   };
 
-  // Fallback benchmark growth rate (in case it's missing)
-  const benchmarkGrowth = investmentDetails?.benchmark_growth ?? 3.5;
-
-  // Decide explanation message based on model recommendation
   const getExplanationMessage = () => {
     if (!recommendation) return "";
-    if (recommendation.toLowerCase().includes("buy")) {
-      return "📈 This property's projected value is growing faster than the market average. Consider buying for strong returns.";
+    if (investmentDetails?.show_growth_chart) {
+      if (recommendation.toLowerCase().includes("buy")) {
+        return " This property's projected value is growing faster than the market average. Consider buying for strong returns.";
+      } else {
+        return ` This property's value grows slower than the market benchmark (${benchmarkGrowth}%) or may not meet investment criteria. Avoid or investigate further.`;
+      }
     } else {
-      return `📉 This property's value grows slower than the market benchmark (${benchmarkGrowth}%) or may not meet investment criteria. Avoid or investigate further.`;
+      return " Despite the trend line, the recommendation is based on deeper investment indicators like ROI and rent ratio.";
     }
   };
 
@@ -54,8 +56,7 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
             <p><strong>ROI:</strong> {investmentDetails?.roi || ""}%</p>
             <p><strong>Why this recommendation?</strong><br />{investmentDetails.explanation}</p>
 
-
-            {Array.isArray(investmentDetails?.price_projection) && (
+            {investmentDetails?.show_growth_chart && Array.isArray(investmentDetails?.price_projection) ? (
               <div style={{ width: '100%' }}>
                 <Line
                   data={{
@@ -68,7 +69,7 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
                         tension: 0.3
                       },
                       {
-                        label: `Benchmark (${benchmarkGrowth}% Growth)`,
+                        label: `Benchmark (${benchmarkGrowth}% Growth)` ,
                         data: generateBenchmarkLine(
                           investmentDetails.price_projection[0],
                           investmentDetails.price_projection.length,
@@ -99,10 +100,31 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
                   }}
                 />
               </div>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <Bar
+                  data={{
+                    labels: ['ROI (%)', 'Growth Rate (%)'],
+                    datasets: [
+                      {
+                        label: 'Investment Indicators',
+                        data: [investmentDetails.roi, investmentDetails.growth_rate],
+                        backgroundColor: ['#2ECC71', '#3498DB']
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: false },
+                      title: { display: true, text: 'ROI & Growth Breakdown' }
+                    }
+                  }}
+                />
+              </div>
             )}
 
             <p style={{ marginTop: '1rem' }}>{getExplanationMessage()}</p>
-
             <button onClick={onClose}>Close</button>
           </>
         )}
@@ -111,7 +133,6 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
     document.body
   );
 };
-
 
 
 
@@ -236,7 +257,10 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
         roi: result.roi,
         estimated_rent: result.estimated_rent,
         growth_rate: result.growth_rate,
-        price_projection: result.price_projection
+        price_projection: result.price_projection,
+        benchmark_growth: result.benchmark_growth,
+        show_growth_chart: result.show_growth_chart,
+        explanation: result.explanation
       });
 
     } catch (err) {
