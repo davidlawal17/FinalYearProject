@@ -465,14 +465,11 @@ def extract_region_from_title(title):
     prefix = match.group(1) if match else 'UNK'
     return REGION_MAP.get(prefix, 'Other')
 
-
 @bp.route('/api/recommend', methods=['POST'])
 def recommend():
     try:
-
         data = request.get_json()
 
-        # Extract inputs
         price = float(data.get("price"))
         bedrooms = int(data.get("bedrooms", 1))
         bathrooms = int(data.get("bathrooms", 1))
@@ -480,21 +477,17 @@ def recommend():
         property_type = data.get("property_type", "Other")
         region = data.get("region", "Other")
 
-        # Compute features
         price_per_bedroom = price / bedrooms
         price_per_sqft = price / sqft
         estimated_rent = price * np.random.uniform(0.0035, 0.0065)
         rent_to_price_ratio = (estimated_rent * 12) / price * 100
         bedrooms_per_100k = bedrooms / (price / 100_000)
 
-        # Project growth
         growth_rate = np.random.uniform(0.02, 0.06)
         roi = rent_to_price_ratio + (growth_rate * 100)
 
-        # Build price projection
         price_projection = [round(price * ((1 + growth_rate) ** i)) for i in range(6)]
 
-        # Region-specific benchmark
         region_benchmark_rates = {
             "Central": 0.035,
             "North": 0.030,
@@ -505,8 +498,9 @@ def recommend():
         }
         benchmark_growth = region_benchmark_rates.get(region, 0.035)
         benchmark_projection = [round(price * ((1 + benchmark_growth) ** i)) for i in range(6)]
+        benchmark_roi = 7.5
+        growth_threshold = 4.5  # Now explicitly tracked
 
-        # Build feature dictionary
         features = {
             "price": price,
             "bedrooms": bedrooms,
@@ -517,42 +511,53 @@ def recommend():
             "estimated_rent": estimated_rent,
             "rent_to_price_ratio": rent_to_price_ratio,
             "bedrooms_per_100k": bedrooms_per_100k,
-            "region_score": benchmark_growth * 100  # Use as a proxy for region investment quality
+            "region_score": benchmark_growth * 100
         }
 
-        # One-hot encode property type
         for pt in ["Detached", "Flat", "House", "Semi_Detached", "Terraced", "Other"]:
             features[f"propertyType_{pt}"] = 1 if property_type == pt else 0
 
-        # One-hot encode region
         for r in ["North", "South", "East", "West", "Central", "Other"]:
             features[f"region_{r}"] = 1 if region == r else 0
 
-        # Ensure all features are present
         for f in FEATURES:
             features.setdefault(f, 0)
 
-        # Get model prediction
         result = predict_recommendation(features)
         recommendation = result["recommendation"]
 
-        # Decide whether to show the growth chart
         show_growth_chart = (
             (recommendation == "Buy" and growth_rate >= benchmark_growth) or
             (recommendation == "Avoid" and growth_rate < benchmark_growth)
         )
 
-        # Explanation if graph contradicts model
-        if not show_growth_chart:
-            explanation = (
-                f"📊 Although the growth trend appears {'strong' if growth_rate >= benchmark_growth else 'weak'}, "
-                f"the model recommends to {recommendation.lower()} based on deeper metrics such as ROI "
-                f"({round(roi, 2)}%) and rent-to-price ratio."
-            )
-        else:
-            explanation = " The recommendation aligns with the projected growth trend."
+        show_roi_chart = not show_growth_chart
 
-        # Return full response
+        if not show_growth_chart:
+            if recommendation == "Buy" and roi > benchmark_roi:
+                explanation = (
+                    f"Although growth is weaker than market average ({growth_rate * 100:.2f}% vs {benchmark_growth * 100:.2f}%), "
+                    f"the ROI is strong at {roi:.2f}%, well above the benchmark ROI of {benchmark_roi}%."
+                )
+            elif recommendation == "Avoid" and roi < benchmark_roi:
+                explanation = (
+                    f"Despite a strong growth rate of {growth_rate * 100:.2f}%, the ROI is only {roi:.2f}%, "
+                    f"which is below the benchmark of {benchmark_roi}%. This suggests it may not be a worthwhile investment."
+                )
+            elif recommendation == "Avoid" and roi > benchmark_roi:
+                explanation = (
+                    f"Although ROI is strong at {roi:.2f}%, the growth rate of {growth_rate * 100:.2f}% is too weak compared to the threshold of {growth_threshold}%. "
+                    f"Avoid unless other factors are favorable."
+                )
+            elif recommendation == "Buy" and roi < benchmark_roi:
+                explanation = (
+                    f"Growth rate of {growth_rate * 100:.2f}% exceeds expectations, justifying a buy despite ROI of {roi:.2f}% being near or below the benchmark ROI of {benchmark_roi}%."
+                )
+            else:
+                explanation = "The model's recommendation is based on a mix of growth and ROI factors."
+        else:
+            explanation = "The recommendation aligns with the projected growth trend."
+
         return jsonify({
             **result,
             "roi": round(roi, 2),
@@ -561,15 +566,13 @@ def recommend():
             "price_projection": price_projection,
             "benchmark_projection": benchmark_projection,
             "benchmark_growth": round(benchmark_growth * 100, 2),
+            "benchmark_roi": benchmark_roi,
+            "growth_threshold": growth_threshold,
             "show_growth_chart": show_growth_chart,
+            "show_roi_chart": show_roi_chart,
             "explanation": explanation
         })
 
     except Exception as e:
         print("Error in recommendation route:", e)
         return jsonify({"error": str(e)}), 500
-
-    print(f"RECOMMENDATION: {recommendation}")
-    print(f"Growth Rate: {growth_rate:.4f} vs Benchmark: {benchmark_growth:.4f}")
-    print(f"Show Growth Chart: {show_growth_chart}")
-

@@ -20,6 +20,10 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
   if (!isOpen) return null;
 
   const benchmarkGrowth = investmentDetails?.benchmark_growth ?? 3.5;
+  const benchmarkROI = investmentDetails?.benchmark_roi ?? 7.5;
+  const growthThreshold = investmentDetails?.growth_threshold ?? 4.5;
+  const showLineChart = investmentDetails?.show_growth_chart;
+  const showBarChart = investmentDetails?.show_roi_chart;
 
   const generateBenchmarkLine = (startValue, years, annualGrowth = 0.035) => {
     const result = [];
@@ -31,14 +35,28 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
 
   const getExplanationMessage = () => {
     if (!recommendation) return "";
-    if (investmentDetails?.show_growth_chart) {
-      if (recommendation.toLowerCase().includes("buy")) {
-        return " This property's projected value is growing faster than the market average. Consider buying for strong returns.";
+    const rec = recommendation.toLowerCase();
+    const growth = investmentDetails?.growth_rate;
+    const roi = investmentDetails?.roi;
+
+    if (showLineChart) {
+      if (rec.includes("buy")) {
+        return `This property's projected value is growing faster than the market average. Consider buying for strong returns.`;
       } else {
-        return ` This property's value grows slower than the market benchmark (${benchmarkGrowth}%) or may not meet investment criteria. Avoid or investigate further.`;
+        return `This property's value grows slower than the market benchmark (${benchmarkGrowth}%) or may not meet investment criteria. Avoid or investigate further.`;
       }
-    } else {
-      return " Despite the trend line, the recommendation is based on deeper investment indicators like ROI and rent ratio.";
+    } else if (showBarChart) {
+      if (rec.includes("buy") && roi > benchmarkROI) {
+        return `Although growth is weaker than market average (${growth}% vs ${benchmarkGrowth}%), the ROI is strong at ${roi}%, well above the benchmark ROI of ${benchmarkROI}%.`;
+      } else if (rec.includes("avoid") && growth < growthThreshold) {
+        return `Although ROI is strong at ${roi}%, the growth rate of ${growth}% is too weak compared to the required threshold of ${growthThreshold}%. Avoid unless other factors are favorable.`;
+      } else if (rec.includes("avoid") && roi < benchmarkROI) {
+        return `Despite a strong growth rate of ${growth}%, the ROI is only ${roi}%, which is below the benchmark of ${benchmarkROI}%. This suggests it may not be a worthwhile investment.`;
+      } else if (rec.includes("buy") && roi < benchmarkROI) {
+        return `Growth rate of ${growth}% exceeds expectations, justifying a buy despite ROI of ${roi}% being near or below the benchmark ROI of ${benchmarkROI}%.`;
+      } else {
+        return `The model's recommendation is based on a mix of growth and ROI factors.`;
+      }
     }
   };
 
@@ -49,14 +67,14 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
           <div className="spinner"></div>
         ) : (
           <>
-            <h2> Investr's Advice</h2>
+            <h2>Investr's Advice</h2>
             <p><strong>Recommendation:</strong> {recommendation}</p>
             <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails?.estimated_rent || ""}</p>
             <p><strong>Growth Rate:</strong> {investmentDetails?.growth_rate || ""}%</p>
             <p><strong>ROI:</strong> {investmentDetails?.roi || ""}%</p>
-            <p><strong>Why this recommendation?</strong><br />{investmentDetails.explanation}</p>
+            <p><strong>Why this recommendation?</strong><br />{getExplanationMessage()}</p>
 
-            {investmentDetails?.show_growth_chart && Array.isArray(investmentDetails?.price_projection) ? (
+            {showLineChart && Array.isArray(investmentDetails?.price_projection) ? (
               <div style={{ width: '100%' }}>
                 <Line
                   data={{
@@ -69,7 +87,7 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
                         tension: 0.3
                       },
                       {
-                        label: `Benchmark (${benchmarkGrowth}% Growth)` ,
+                        label: `Benchmark (${benchmarkGrowth}% Growth)`,
                         data: generateBenchmarkLine(
                           investmentDetails.price_projection[0],
                           investmentDetails.price_projection.length,
@@ -100,16 +118,16 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
                   }}
                 />
               </div>
-            ) : (
+            ) : showBarChart ? (
               <div style={{ width: '100%' }}>
                 <Bar
                   data={{
-                    labels: ['ROI (%)', 'Growth Rate (%)'],
+                    labels: ['ROI (%)', 'Benchmark ROI (%)'],
                     datasets: [
                       {
-                        label: 'Investment Indicators',
-                        data: [investmentDetails.roi, investmentDetails.growth_rate],
-                        backgroundColor: ['#2ECC71', '#3498DB']
+                        label: 'ROI Comparison',
+                        data: [investmentDetails.roi, benchmarkROI],
+                        backgroundColor: ['#2ECC71', '#E67E22']
                       }
                     ]
                   }}
@@ -117,14 +135,22 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
                     responsive: true,
                     plugins: {
                       legend: { display: false },
-                      title: { display: true, text: 'ROI & Growth Breakdown' }
+                      title: { display: true, text: 'ROI vs Benchmark ROI' }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: { color: '#EAEDED' }
+                      },
+                      x: {
+                        ticks: { color: '#EAEDED' }
+                      }
                     }
                   }}
                 />
               </div>
-            )}
+            ) : null}
 
-            <p style={{ marginTop: '1rem' }}>{getExplanationMessage()}</p>
             <button onClick={onClose}>Close</button>
           </>
         )}
@@ -133,7 +159,6 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
     document.body
   );
 };
-
 
 
 const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false, onRemoveFavourite }) => {
@@ -253,15 +278,19 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
         ? `${result.recommendation} (${result.confidence}% confidence)`
         : "Unable to generate recommendation.");
 
-      setInvestmentDetails({
-        roi: result.roi,
-        estimated_rent: result.estimated_rent,
-        growth_rate: result.growth_rate,
-        price_projection: result.price_projection,
-        benchmark_growth: result.benchmark_growth,
-        show_growth_chart: result.show_growth_chart,
-        explanation: result.explanation
-      });
+     setInvestmentDetails({
+      roi: result.roi,
+      estimated_rent: result.estimated_rent,
+      growth_rate: result.growth_rate,
+      price_projection: result.price_projection,
+      benchmark_growth: result.benchmark_growth,
+      benchmark_roi: result.benchmark_roi,
+      growth_threshold: result.growth_threshold,
+      show_growth_chart: result.show_growth_chart,
+      show_roi_chart: result.show_roi_chart,
+      explanation: result.explanation
+    });
+
 
     } catch (err) {
       console.error("Recommendation Error:", err);
@@ -282,32 +311,32 @@ const PropertyCard = ({ property, savedProperties = [], isFavouritePage = false,
         <h3>{property.title}</h3>
         <p className="property-price">£{property.price?.toLocaleString() || 'N/A'}</p>
         <div className="property-features">
-          <span>🏠 {property.bedrooms} bed</span>
-          <span>🚿 {property.bathrooms} bath</span>
-          <span>📐 {property.property_type}</span>
+          <span> {property.bedrooms} bed</span>
+          <span> {property.bathrooms} bath</span>
+          <span> {property.property_type}</span>
         </div>
-        <p className="property-location">📍 {property.location}</p>
+        <p className="property-location"> {property.location}</p>
         <p className="property-description">{property.description}</p>
       </div>
 
       <div className="property-actions">
         {!isSaved && user && !isFavouritePage && (
           <button onClick={handleSave} disabled={isLoading} className="save-button">
-            {isLoading ? 'Saving...' : '❤️ Save Property'}
+            {isLoading ? 'Saving...' : 'Save Property'}
           </button>
         )}
         {isFavouritePage && (
           <button onClick={handleRemove} disabled={isLoading} className="remove-button">
-            {isLoading ? 'Removing...' : '🗑️ Remove'}
+            {isLoading ? 'Removing...' : 'Remove'}
           </button>
         )}
         {isOwner && (
           <button onClick={handleDelete} disabled={isLoading} className="delete-button">
-            {isLoading ? 'Deleting...' : '❌ Delete Property'}
+            {isLoading ? 'Deleting...' : 'Delete Property'}
           </button>
         )}
         <button onClick={handleInvestmentAdvice} className="recommendation-button">
-          💡 Get Investment Advice
+           Get Investment Advice
         </button>
       </div>
 
