@@ -78,4 +78,11 @@ I will start with the recommendation feature.
 I have successfully integrated a machine learning model for the investment recommendation feature of my real estate assistant platform. The model is a Gradient Boosting Classifier trained on a cleaned dataset of London property listings. 
 
 However, during testing, I noticed that the model predicts “Buy” for nearly every property, often with 100% confidence. This is a clear sign of overfitting. This means that the model is not realistic, therefore I am to improve the reliabily and accuracy of the model.
+I realised that there was a label leakage. One of the labels which the model used for classification was a feature which it was being trained on, this is what caused the overfitting. Therefore I had to ammend my features, and labels slightly. This was challenging as the model's performance often dropped,
+It was a struggle building an accuracte and realisitc model that was able to generalise well. Espeically on the limited data which the properties in my property listing provided. However we got there in the end, I found that engineering features such as rent-to-price ratio and price-per-bedroom helped improve the model alot.
+After a lot of trial and error, experimentation partnered with logical thinking I was finally able to build a decent model (72% accuracy)
+
+The next challenge was making sure the frontend visualisations didn't contradict the model's output(recommendations). This was just a case of using logic to detect inconsistencies and compensate for them by giving an explanation and alternate graph.
+
+I am happy with the work I have managed to do however, I am running out of time I think I can only do one more feature so I have to choose between a news feature and the simulation feature.
 
