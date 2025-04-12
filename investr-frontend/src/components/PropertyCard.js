@@ -47,11 +47,13 @@ const InvestmentModal = ({ isOpen, onClose, isLoading, recommendation, investmen
           <div className="spinner"></div>
         ) : (
           <>
-            <h2>💡 Investment Advice</h2>
+            <h2> Investr's Advice</h2>
             <p><strong>Recommendation:</strong> {recommendation}</p>
             <p><strong>Estimated Monthly Rent:</strong> £{investmentDetails?.estimated_rent || ""}</p>
             <p><strong>Growth Rate:</strong> {investmentDetails?.growth_rate || ""}%</p>
             <p><strong>ROI:</strong> {investmentDetails?.roi || ""}%</p>
+            <p><strong>Why this recommendation?</strong><br />{investmentDetails.explanation}</p>
+
 
             {Array.isArray(investmentDetails?.price_projection) && (
               <div style={{ width: '100%' }}>

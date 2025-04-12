@@ -470,7 +470,7 @@ def recommend():
     try:
         data = request.get_json()
 
-        # Extract basic features
+        # Extract raw inputs
         price = float(data.get("price"))
         bedrooms = int(data.get("bedrooms", 1))
         bathrooms = int(data.get("bathrooms", 1))
@@ -478,33 +478,38 @@ def recommend():
         property_type = data.get("property_type", "Other")
         region = data.get("region", "Other")
 
-        # Region-based benchmark growth rates (based on 2025 predictions)
-        region_benchmark_rates = {
-            "Central": 0.035,
-            "North": 0.030,
-            "South": 0.035,
-            "East": 0.040,
-            "West": 0.030,
-            "Other": 0.035
-        }
-
-        # Use region-specific benchmark growth
-        benchmark_growth = region_benchmark_rates.get(region, 0.035)
-        benchmark_projection = [round(price * ((1 + benchmark_growth) ** i)) for i in range(6)]
-
-        # Simulate rent and growth dynamically
-        growth_rate = np.random.uniform(0.02, 0.06)
-        estimated_rent = price * np.random.uniform(0.0035, 0.0065)
-        roi = (estimated_rent * 12 / price * 100) + (growth_rate * 100)
-
-        # Compute price projection
-        price_projection = [round(price * ((1 + growth_rate) ** i)) for i in range(6)]
-
-        # Feature engineering
+        # Derived features
         price_per_bedroom = price / bedrooms
         price_per_sqft = price / sqft
+        estimated_rent = price * np.random.uniform(0.0035, 0.0065)
+        rent_to_price_ratio = (estimated_rent * 12) / price * 100
+        bedrooms_per_100k = bedrooms / (price / 100_000)
 
-        # Build feature dict
+        # Region score
+        region_score_map = {
+            "Central": 0.90,
+            "East": 0.85,
+            "South": 0.75,
+            "West": 0.65,
+            "North": 0.60,
+            "Other": 0.50
+        }
+        region_score = region_score_map.get(region, 0.50)
+
+        # Simulated growth and ROI
+        growth_rate = np.random.uniform(0.02, 0.06)
+        roi = rent_to_price_ratio + (growth_rate * 100)
+
+        # 5-year projections
+        price_projection = [round(price * ((1 + growth_rate) ** i)) for i in range(6)]
+        benchmark_growth_map = {
+            "Central": 0.035, "North": 0.030, "South": 0.035,
+            "East": 0.040, "West": 0.030, "Other": 0.035
+        }
+        benchmark_growth = benchmark_growth_map.get(region, 0.035)
+        benchmark_projection = [round(price * ((1 + benchmark_growth) ** i)) for i in range(6)]
+
+        # Build feature dict (match model exactly)
         features = {
             "price": price,
             "bedrooms": bedrooms,
@@ -513,25 +518,27 @@ def recommend():
             "price_per_bedroom": price_per_bedroom,
             "price_per_sqft": price_per_sqft,
             "estimated_rent": estimated_rent,
-            "expected_growth_rate": growth_rate
+            "rent_to_price_ratio": rent_to_price_ratio,
+            "bedrooms_per_100k": bedrooms_per_100k,
+            "region_score": region_score
         }
 
-        # One-hot encode property type
-        for pt in ["Detached", "Flat", "House", "Semi_Detached", "Terraced", "Other"]:
-            features[f"propertyType_{pt}"] = 1 if property_type == pt else 0
-
-        # One-hot encode region
-        for r in ["North", "South", "East", "West", "Central", "Other"]:
+        # One-hot encoding for region
+        for r in ["Central", "East", "North", "Other", "South", "West"]:
             features[f"region_{r}"] = 1 if region == r else 0
 
-        # Fill any missing feature with 0
+        # One-hot encoding for property type
+        for pt in ["Detached", "Flat", "House", "Other", "Semi_Detached", "Terraced"]:
+            features[f"propertyType_{pt}"] = 1 if property_type == pt else 0
+
+        # Ensure missing features are included as 0
+
         for f in FEATURES:
             features.setdefault(f, 0)
 
         # Predict
         result = predict_recommendation(features)
 
-        # Return full info
         return jsonify({
             **result,
             "roi": round(roi, 2),
@@ -539,7 +546,7 @@ def recommend():
             "estimated_rent": round(estimated_rent, 2),
             "price_projection": price_projection,
             "benchmark_projection": benchmark_projection,
-            "benchmark_growth": round(benchmark_growth * 100, 2)  # Return % for frontend label
+            "benchmark_growth": round(benchmark_growth * 100, 2)
         })
 
     except Exception as e:
