@@ -576,3 +576,52 @@ def recommend():
     except Exception as e:
         print("Error in recommendation route:", e)
         return jsonify({"error": str(e)}), 500
+
+@bp.route('/api/simulate', methods=['POST'])
+def simulate_investment():
+    data = request.get_json()
+
+    try:
+        # Extract user inputs
+        property_price = float(data.get("property_price"))
+        down_payment = float(data.get("down_payment"))
+        mortgage_rate = float(data.get("mortgage_rate")) / 100  # Convert to decimal
+        rental_income = float(data.get("rental_income"))
+        appreciation_rate = float(data.get("appreciation_rate")) / 100
+        years = int(data.get("years"))
+
+        # Loan details
+        loan_amount = property_price - down_payment
+        monthly_rate = mortgage_rate / 12
+        total_months = years * 12
+
+        # Monthly mortgage payment using amortization formula
+        monthly_mortgage_payment = loan_amount * monthly_rate / (1 - math.pow(1 + monthly_rate, -total_months))
+        total_mortgage_paid = monthly_mortgage_payment * total_months
+
+        # Future property value
+        future_value = property_price * math.pow(1 + appreciation_rate, years)
+
+        # Rental income over the period
+        total_rent_income = rental_income * 12 * years
+
+        # Net profit
+        net_profit = (future_value - property_price) + total_rent_income - total_mortgage_paid
+
+        # ROI
+        roi = (net_profit / down_payment) * 100
+
+        # Annual cashflow (rental income - mortgage)
+        annual_cashflow = (rental_income * 12) - (monthly_mortgage_payment * 12)
+
+        return jsonify({
+            "future_value": round(future_value, 2),
+            "total_rent_income": round(total_rent_income, 2),
+            "total_mortgage_paid": round(total_mortgage_paid, 2),
+            "net_profit": round(net_profit, 2),
+            "roi": round(roi, 2),
+            "annual_cashflow": round(annual_cashflow, 2)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
