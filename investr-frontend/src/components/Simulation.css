@@ -51,3 +51,36 @@ button:disabled {
   color: #ff4d4d;
   margin-top: 1rem;
 }
+
+.chart-container {
+  margin-top: 2rem;
+  background-color: #2b2b3d;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.tooltip {
+  position: relative;
+  cursor: pointer;
+}
+
+.tooltiptext {
+  visibility: hidden;
+  width: 260px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  top: 125%;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
