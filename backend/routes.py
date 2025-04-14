@@ -577,6 +577,7 @@ def recommend():
         print("Error in recommendation route:", e)
         return jsonify({"error": str(e)}), 500
 
+
 @bp.route('/api/simulate', methods=['POST'])
 def simulate_investment():
     data = request.get_json()
@@ -589,15 +590,23 @@ def simulate_investment():
         rental_income = float(data.get("rental_income"))
         appreciation_rate = float(data.get("appreciation_rate")) / 100
         years = int(data.get("years"))
+        mortgage_term = int(data.get("mortgage_term"))
 
         # Loan details
         loan_amount = property_price - down_payment
         monthly_rate = mortgage_rate / 12
         total_months = years * 12
+        mortgage_months = mortgage_term * 12
 
         # Monthly mortgage payment using amortization formula
-        monthly_mortgage_payment = loan_amount * monthly_rate / (1 - math.pow(1 + monthly_rate, -total_months))
-        total_mortgage_paid = monthly_mortgage_payment * total_months
+        if monthly_rate == 0:
+            monthly_mortgage_payment = loan_amount / mortgage_months
+        else:
+            monthly_mortgage_payment = loan_amount * monthly_rate / (1 - math.pow(1 + monthly_rate, -mortgage_months))
+
+        # Cap total mortgage paid at mortgage_term duration
+        months_paid = min(total_months, mortgage_months)
+        total_mortgage_paid = monthly_mortgage_payment * months_paid
 
         # Future property value
         future_value = property_price * math.pow(1 + appreciation_rate, years)
@@ -605,22 +614,23 @@ def simulate_investment():
         # Rental income over the period
         total_rent_income = rental_income * 12 * years
 
-        # Net profit
-        net_profit = (future_value - property_price) + total_rent_income - total_mortgage_paid
+        # Break-even year (when cumulative rent >= cumulative mortgage)
+        cumulative_rent = 0
+        cumulative_mortgage = 0
+        break_even_year = None
 
-        # ROI
-        roi = (net_profit / down_payment) * 100
-
-        # Annual cashflow (rental income - mortgage)
-        annual_cashflow = (rental_income * 12) - (monthly_mortgage_payment * 12)
+        for y in range(1, years + 1):
+            cumulative_rent += rental_income * 12
+            if y * 12 <= mortgage_months:
+                cumulative_mortgage += monthly_mortgage_payment * 12
+            if not break_even_year and cumulative_rent >= cumulative_mortgage:
+                break_even_year = y
 
         return jsonify({
             "future_value": round(future_value, 2),
             "total_rent_income": round(total_rent_income, 2),
             "total_mortgage_paid": round(total_mortgage_paid, 2),
-            "net_profit": round(net_profit, 2),
-            "roi": round(roi, 2),
-            "annual_cashflow": round(annual_cashflow, 2)
+            "break_even_year": break_even_year
         })
 
     except Exception as e:

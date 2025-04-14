@@ -311,9 +311,8 @@ return (
         <p>📈 Future Property Value: £{result.future_value.toLocaleString()}</p>
         <p>💰 Total Rental Income: £{result.total_rent_income.toLocaleString()}</p>
         <p>🏦 Total Mortgage Paid: £{result.total_mortgage_paid.toLocaleString()}</p>
-        <p>📊 Net Profit: £{result.net_profit.toLocaleString()}</p>
-        <p>🔁 Annual Cash Flow: £{result.annual_cashflow.toLocaleString()}</p>
-        <p>📉 ROI: {result.roi.toFixed(2)}%</p>
+        <p>⏳ Break-Even Year: {result.break_even_year ? `Year ${result.break_even_year}` : "Not within selected horizon"}</p>
+
         <div className="chart-container">
           <h3>📊 Property Value vs Starting Price</h3>
           <Bar
@@ -325,10 +324,11 @@ return (
                 x: { ticks: { color: '#ccc' } },
                 y: { ticks: { color: '#ccc' } }
               }
-            }}
-          />
-        </div>
+          }}
+        />
       </div>
+    </div>
+
     )}
   </div>
 );
