@@ -27,10 +27,9 @@ class Property(db.Model):
     source = db.Column(db.String(20), default='user')
 
 class Favorite(db.Model):
-    __tablename__ = 'favourites'  #  Ensure this matches your actual table name
-
+    __tablename__ = 'favourites'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey('user.firebase_uid'), nullable=False)  #  Fix FK reference
+    user_id = db.Column(db.String, db.ForeignKey('user.firebase_uid'), nullable=False)
     property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
     saved_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
 

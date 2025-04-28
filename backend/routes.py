@@ -164,10 +164,10 @@ def handle_get_properties():
         return jsonify({"error": "Failed to fetch properties", "details": str(e)}), 500
 
 
-@jwt_required()  # Add this decorator
+@jwt_required()
 def handle_post_property():
     try:
-        current_user = get_jwt_identity()  # Now this will work
+        current_user = get_jwt_identity()
         if not current_user:
             print("ERROR: No user identity in JWT")
             return jsonify({"error": "Unauthorized - invalid token"}), 401
@@ -577,7 +577,6 @@ def recommend():
         print("Error in recommendation route:", e)
         return jsonify({"error": str(e)}), 500
 
-
 @bp.route('/api/simulate', methods=['POST'])
 def simulate_investment():
     data = request.get_json()
@@ -608,29 +607,27 @@ def simulate_investment():
         months_paid = min(total_months, mortgage_months)
         total_mortgage_paid = monthly_mortgage_payment * months_paid
 
-        # Future property value
+        # Future property value after appreciation
         future_value = property_price * math.pow(1 + appreciation_rate, years)
 
-        # Rental income over the period
+        # Rental income over the investment period
         total_rent_income = rental_income * 12 * years
 
-        # Break-even year (when cumulative rent >= cumulative mortgage)
-        cumulative_rent = 0
-        cumulative_mortgage = 0
-        break_even_year = None
+        # Calculate outstanding loan balance
+        if total_months >= mortgage_months:
+            remaining_loan_balance = 0
+        else:
+            remaining_loan_balance = loan_amount * math.pow(1 + monthly_rate, total_months) - \
+                                     monthly_mortgage_payment * (math.pow(1 + monthly_rate, total_months) - 1) / monthly_rate
 
-        for y in range(1, years + 1):
-            cumulative_rent += rental_income * 12
-            if y * 12 <= mortgage_months:
-                cumulative_mortgage += monthly_mortgage_payment * 12
-            if not break_even_year and cumulative_rent >= cumulative_mortgage:
-                break_even_year = y
+        # Projected net equity = future value - remaining loan balance
+        projected_net_equity = future_value - remaining_loan_balance
 
         return jsonify({
             "future_value": round(future_value, 2),
             "total_rent_income": round(total_rent_income, 2),
             "total_mortgage_paid": round(total_mortgage_paid, 2),
-            "break_even_year": break_even_year
+            "projected_net_equity": round(projected_net_equity, 2)
         })
 
     except Exception as e:

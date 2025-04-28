@@ -1,6 +1,7 @@
+#app.py
 from flask import Flask,send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate  # Import Flask-Migrate
+from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 import os
 from dotenv import load_dotenv
@@ -25,9 +26,9 @@ if db_url and db_url.startswith("postgres://"):
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize extensions
+# Initialise extensions
 db.init_app(app)
-migrate = Migrate(app, db)  #  Initialize Flask-Migrate
+migrate = Migrate(app, db)  #  Initialise Flask-Migrate
 jwt = JWTManager(app)
 
 # Register Blueprints
