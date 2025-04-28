@@ -603,31 +603,27 @@ def simulate_investment():
         else:
             monthly_mortgage_payment = loan_amount * monthly_rate / (1 - math.pow(1 + monthly_rate, -mortgage_months))
 
-        # Cap total mortgage paid at mortgage_term duration
+        # How many months paid?
         months_paid = min(total_months, mortgage_months)
         total_mortgage_paid = monthly_mortgage_payment * months_paid
 
-        # Future property value after appreciation
+        # Future property value
         future_value = property_price * math.pow(1 + appreciation_rate, years)
 
-        # Rental income over the investment period
+        # Total rental income over the period
         total_rent_income = rental_income * 12 * years
 
-        # Calculate outstanding loan balance
-        if total_months >= mortgage_months:
-            remaining_loan_balance = 0
-        else:
-            remaining_loan_balance = loan_amount * math.pow(1 + monthly_rate, total_months) - \
-                                     monthly_mortgage_payment * (math.pow(1 + monthly_rate, total_months) - 1) / monthly_rate
-
-        # Projected net equity = future value - remaining loan balance
-        projected_net_equity = future_value - remaining_loan_balance
+        # Projected net equity = future property value - outstanding mortgage
+        # Outstanding mortgage = loan amount - total principal repaid (simplified assumption: no overpayment focus)
+        outstanding_mortgage = max(loan_amount - (monthly_mortgage_payment * months_paid), 0)
+        projected_net_equity = future_value - outstanding_mortgage
 
         return jsonify({
             "future_value": round(future_value, 2),
             "total_rent_income": round(total_rent_income, 2),
             "total_mortgage_paid": round(total_mortgage_paid, 2),
-            "projected_net_equity": round(projected_net_equity, 2)
+            "projected_net_equity": round(projected_net_equity, 2),
+            "equity_percent": round((projected_net_equity / future_value) * 100, 2)
         })
 
     except Exception as e:
