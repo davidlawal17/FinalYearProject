@@ -201,7 +201,7 @@ const Simulation = () => {
       <input
         type="number"
         min="0"
-        step="25"
+        step="any"
         name="rental_income"
         value={formData.rental_income}
         onChange={handleChange}
