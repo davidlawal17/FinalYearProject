@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropertyCard from './PropertyCard';
-import AddProperty from './AddProperty';
+//import AddProperty from './AddProperty';
 import './PropertyList.css';
 
 const PropertyList = () => {
@@ -32,12 +32,21 @@ const PropertyList = () => {
     }
   };
 
+
   useEffect(() => {
     fetchProperties();
   }, []);
 
+
   const handleInputChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Prevent negative values for price inputs
+  if ((name === "min_price" || name === "max_price") && Number(value) < 0) {
+    return; // Do nothing if negative
+  }
+
+  setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
   return (
@@ -67,7 +76,7 @@ const PropertyList = () => {
 
         <button onClick={fetchProperties}>Search</button>
 
-        {/* 👉 Add Property Button */}
+        {/*  Add Property Button */}
         <button className="add-property-button" onClick={() => navigate('/add-property')}>
           + Add Property
         </button>

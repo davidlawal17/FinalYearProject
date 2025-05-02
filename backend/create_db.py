@@ -1,4 +1,4 @@
-# run this file to create your database
+# run this file to create database
 
 from app import app, db
 

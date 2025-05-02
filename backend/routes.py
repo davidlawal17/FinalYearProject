@@ -5,7 +5,7 @@ from fauth import signup, login_user
 from werkzeug.utils import secure_filename
 from fconfig import verify_token
 from models import User, Property,Favorite
-from extensions import db  # Import db if you need to reference it directly
+from extensions import db  # Import db
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
@@ -603,7 +603,7 @@ def simulate_investment():
         else:
             monthly_mortgage_payment = loan_amount * monthly_rate / (1 - math.pow(1 + monthly_rate, -mortgage_months))
 
-        # How many months paid?
+        # How many months paid
         months_paid = min(total_months, mortgage_months)
         total_mortgage_paid = monthly_mortgage_payment * months_paid
 

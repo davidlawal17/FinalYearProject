@@ -16,11 +16,9 @@ const Dashboard = () => {
       <p>Select a feature to get started:</p>
 
       <div className="dashboard-buttons">
-        <button onClick={() => goTo('/properties')}> Property Listing</button>
-        <button onClick={() => goTo('/favourites')}> Saved Favourites</button>
-        <button onClick={() => goTo('/recommender')}> Recommender System</button>
-        <button onClick={() => goTo('/simulation')}> Investment Simulation</button>
-        <button onClick={() => goTo('/news')}> Market News</button>
+        <button onClick={() => goTo('/properties')}>Property Listing</button>
+        <button onClick={() => goTo('/favourites')}>Saved Favourites</button>
+        <button onClick={() => goTo('/simulation')}>Investment Simulation</button>
       </div>
     </div>
   );

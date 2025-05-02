@@ -16,29 +16,36 @@
 }
 
 .dashboard-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  max-width: 500px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
 .dashboard-buttons button {
-  padding: 15px;
-  font-size: 1.1rem;
+  padding: 20px 35px;
+  font-size: 1.4rem;
   background-color: #005A8D;
   color: #EAEDED;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   transition: background-color 0.3s ease, transform 0.2s ease;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  min-width: 200px;
 }
 
 .dashboard-buttons button:hover {
   background-color: #003B5C;
-  transform: scale(1.05);
+  transform: scale(1.05) translateY(-3px);
+}
+
+/* Responsive: smaller buttons for phones */
+@media (max-width: 500px) {
+  .dashboard-buttons button {
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    min-width: 150px;
+  }
 }
