@@ -91,3 +91,10 @@ Sunday 13th April - May 2nd
 -Update, I decided to chose the simulation feature and successfuly implented it.This feature was pretty straightforward to implement in comparison to the others, as it mainly consists of mathematical calculations.
  The most challenges/ time consuming aspect was reasearching how loans and mortgages work and thinking how I can intergate this logic into the feature.
  After I finished the simulation feature I have been writing my dissertation.
+
+
+May 2nd
+ In the last commit I just made a few small amemendents to things such as comments and code structure, not really changing much. The biggest adjustment I made was to the property and search price filters; not allowing anyone to type and search for negative price values
+
+This concludes the project Investr, although this project was far from perfect, it has taught me a lot in terms of programming, project and time managment/planning, fixing errors, thinking deeply about coding logic and using Git for version control.
+
