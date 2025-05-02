@@ -2,7 +2,7 @@ Project Log- Investr
 Evidence of some of my work that I have been working on is shown in the project Log folder, for example pictures of my wireframes and a document of research I did before starting 
 
 Note- I am behind on my schedule which I planned in the interim report 
-The work which I have already completed in the previous weeks are:
+The work which I have already completed in the previous weeks include:
 #Setting up my pycharm enviornment and firebase.
 #Making the different  git branches
 # I have made two new branches: develop and user/authentication
@@ -11,6 +11,7 @@ After a bit of research, I concluded that its best for me to create a virtual en
 
 Considering that the project started on the 23rd of September 2024
 I am now on week 20 of the Project
+
 Week Monday 10th February - Sunday 16th February
 # As I behind and my interview is next week, the plan for this week is to make as much progress as I can
 More specifcally I am to,
@@ -20,7 +21,7 @@ More specifcally I am to,
 4. Start Creating a presentation for my interview next week
 
 Week Monday 17th February- Sunday 23rd February 
-This is a continuation of what I was working on the previous week. I have made significant progress with implementing the backend of the user authentication system. This week i will focus on intergating the PostgreSQL database, after that I focus on implementing some frontend features, so I can see the authentication process in action. Then as stated before, I will begin woring on a core featurw which I have decied will be the property search and filter, and prepare for my interview.
+This is a continuation of what I was working on the previous week. I have made significant progress with implementing the backend of the user authentication system. This week i will focus on intergating the PostgreSQL database, after that I focus on implementing some frontend features, so I can see the authentication process in action. Then as stated before, I will begin woring on a core feature which I have decied will be the property search and filter, and prepare for my interview.
 
 Week Monday 24th February- Sunday 2nd March
 I have compeleted the user authentication, integrated PostgreSQL for the backend, and have implemented some frontend design. Now I am focsuing on devloping and implementing my core features: which are the property search and filter feature , the recommendation system and the simulation system. I will start with the property search and filter feature.
@@ -86,3 +87,7 @@ The next challenge was making sure the frontend visualisations didn't contradict
 
 I am happy with the work I have managed to do however, I am running out of time I think I can only do one more feature so I have to choose between a news feature and the simulation feature.
 
+Sunday 13th April - May 2nd
+-Update, I decided to chose the simulation feature and successfuly implented it.This feature was pretty straightforward to implement in comparison to the others, as it mainly consists of mathematical calculations.
+ The most challenges/ time consuming aspect was reasearching how loans and mortgages work and thinking how I can intergate this logic into the feature.
+ After I finished the simulation feature I have been writing my dissertation.
