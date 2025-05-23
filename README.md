@@ -74,7 +74,7 @@ npm install
 
 ```bash
 cd backend
-flask run
+python app.py run
 ```
 
 * To run the frontend app:
