@@ -38,10 +38,13 @@ app.register_blueprint(bp)
 # backend/app.py
 
 #This block of code allows files to be uploaded to app.py for the property listings
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'investr-frontend', 'public', 'images')
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'frontend', 'public', 'images')
 os.makedirs(os.path.join(UPLOAD_FOLDER, 'properties'), exist_ok=True)
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Max 5MB
@@ -49,7 +52,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory('../investr-frontend/public/images/properties', filename)
+    return send_from_directory('../frontend/public/images/properties', filename)
 
 @app.route('/images/properties/<filename>')
 def serve_uploaded_image(filename):

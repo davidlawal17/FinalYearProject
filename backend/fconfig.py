@@ -4,11 +4,12 @@ from firebase_admin import credentials, firestore, auth
 import os
 from flask_jwt_extended import decode_token
 from flask_jwt_extended.exceptions import JWTDecodeError
-BASE_DIR = os.path.dirname("/Users/davidlawal/Desktop/Investr-/backend)") # Get the backend directory path
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, "config", "serviceAccountKey.json")
 
 # Load Firebase credentials
-cred = credentials.Certificate("/Users/davidlawal/Desktop/Investr-/backend/config/serviceAccountKey.json")
+cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
 firebase_admin.initialize_app(cred)
 
 # Firestore reference

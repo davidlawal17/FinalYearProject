@@ -18,7 +18,7 @@ import math
 from recomendation import predict_recommendation, FEATURES, model
 import os
 
-UPLOAD_FOLDER = 'investr-frontend/public/images/properties'
+UPLOAD_FOLDER = 'frontend/public/images/properties'
 
 bp = Blueprint('main', __name__)
 

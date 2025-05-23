@@ -1,8 +1,10 @@
 # backend/investment_tools/recommendation.py
 import joblib
 import pandas as pd
+import os
 
-model = joblib.load("backend/models/recommendation_model.pkl")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "recommendation_model.pkl")
+model = joblib.load(MODEL_PATH)
 
 
 FEATURES = [
